@@ -9,7 +9,7 @@ type handler struct {
 	service utils.PinService
 }
 
-func NewHandler() *handler {
+func NewHandler(service utils.PinService) *handler {
 	return &handler{}
 }
 

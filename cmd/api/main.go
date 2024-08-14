@@ -2,22 +2,21 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/ssonit/aura_server/common"
-	"github.com/ssonit/aura_server/middleware"
+	"github.com/ssonit/aura_server/internal/server"
 
 	"go.uber.org/zap"
-
-	pin_http "github.com/ssonit/aura_server/internal/pin/transport/gin"
 )
 
 func connectMongoDB(uri string) (*mongo.Client, error) {
@@ -46,24 +45,18 @@ func main() {
 
 	zap.ReplaceGlobals(logger)
 
-	// uri := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoAddr)
-	// fmt.Println(uri)
-	// mongoClient, err := connectMongoDB(uri)
-	// if err != nil {
-	// 	logger.Fatal("failed to connect to mongo db", zap.Error(err))
-	// }
-
-	// fmt.Println(mongoClient)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoAddr)
+	fmt.Println(uri)
+	mongoClient, err := connectMongoDB(uri)
+	if err != nil {
+		logger.Fatal("failed to connect to mongo db", zap.Error(err))
+	}
 
 	r := gin.Default()
 
-	r.Use(cors.Default())
-	r.Use(middleware.Recovery())
+	s := server.NewServer(r, mongoClient, logger)
+	if err = s.Run(httpAddr); err != nil {
+		log.Fatal(err)
+	}
 
-	h := pin_http.NewHandler()
-	h.RegisterRoutes(r)
-
-	logger.Info("Server listening on ", zap.String("port", httpAddr))
-
-	r.Run(httpAddr)
 }
