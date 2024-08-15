@@ -1,6 +1,10 @@
 package storage
 
 import (
+	"context"
+
+	"github.com/ssonit/aura_server/internal/pin/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -17,4 +21,8 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
+	return primitive.NilObjectID, nil
 }

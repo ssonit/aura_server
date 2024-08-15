@@ -27,8 +27,12 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	r.Use(middleware.Recovery())
 	r.Use(secure.New(secure.Config{}))
 	r.Use(requestid.New())
-	r.Use(limits.RequestSizeLimiter(10))
+	r.Use(limits.RequestSizeLimiter(10 * 1024 * 1024)) // 10MB
 
+	pinGroup := r.Group("/pin")
+	pinHandler.RegisterRoutes(pinGroup)
+
+	// Health check
 	r.GET("/ping", pinHandler.Ping)
 
 	s.logger.Info("Server listening on ", zap.String("port", httpAddr))

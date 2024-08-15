@@ -1,6 +1,19 @@
 version: "3.9"
 
 services:
+  # go-app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: "go-app"
+  #   command: air
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./:/app
+  #   depends_on:
+  #     - mongodb
+
   mongodb:
     image: "mongo:7.0.8"
     container_name: "mongo-db"

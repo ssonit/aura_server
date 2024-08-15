@@ -49,7 +49,7 @@ func main() {
 	fmt.Println(uri)
 	mongoClient, err := connectMongoDB(uri)
 	if err != nil {
-		logger.Fatal("failed to connect to mongo db", zap.Error(err))
+		logger.Fatal("failed to connect to mongodb", zap.Error(err))
 	}
 
 	r := gin.Default()
