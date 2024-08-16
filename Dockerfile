@@ -1,8 +1,4 @@
-FROM golang:1.22-alpine
-
-RUN apk add --no-cache git curl
-
-RUN go install github.com/air-verse/air@latest
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
@@ -12,4 +8,12 @@ RUN go mod download
 
 COPY . .
 
-CMD ["air", "-c", ".air.toml"]
+RUN go build -o /app/main ./cmd/api/main.go
+
+FROM scratch
+
+# Copy the binary from the build stage
+COPY --from=builder /app/main /main
+
+# Set the command to run the binary
+CMD ["/main"]

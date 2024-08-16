@@ -21,7 +21,6 @@ func NewHandler(service utils.PinService) *handler {
 
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/create", h.CreatePin())
-
 }
 
 func (h *handler) CreatePin() func(*gin.Context) {

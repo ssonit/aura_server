@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/joho/godotenv/autoload"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,6 +16,8 @@ import (
 	"github.com/ssonit/aura_server/internal/server"
 
 	"go.uber.org/zap"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func connectMongoDB(uri string) (*mongo.Client, error) {
@@ -36,10 +37,11 @@ var (
 	httpAddr  = common.EnvConfig("HTTP_ADDR", ":8080")
 	mongoUser = common.EnvConfig("MONGO_DB_USERNAME", "root")
 	mongoPass = common.EnvConfig("MONGO_DB_PASSWORD", "admin")
-	mongoAddr = common.EnvConfig("MONGO_DB_HOST", "localhost:27017")
+	mongoAddr = common.EnvConfig("MONGO_DB_HOST", "mongodb:27017")
 )
 
 func main() {
+
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 

@@ -1,9 +1,11 @@
 package common
 
-import "syscall"
+import (
+	"os"
+)
 
 func EnvConfig(key, fallback string) string {
-	if value, ok := syscall.Getenv(key); ok {
+	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
 	return fallback
