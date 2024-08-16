@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/media/utils"
 )
@@ -43,11 +42,6 @@ func (h *handler) GetAllImages() func(*gin.Context) {
 	}
 }
 
-func generatePublicID() string {
-	publicId := fmt.Sprintf("cld-%s", uuid.New().String())
-	return publicId
-}
-
 func (h *handler) UploadImage() func(*gin.Context) {
 	return func(c *gin.Context) {
 		file, err := c.FormFile("file")
@@ -64,16 +58,17 @@ func (h *handler) UploadImage() func(*gin.Context) {
 		}
 		defer f.Close()
 
-		fmt.Println(generatePublicID())
+		fmt.Println(common.GeneratePublicID())
 
 		// cld, err := cloudinary.NewFromParams(
-		//    cloudinaryCloudName,
-		//    cloudinaryAPIKey,
-		//    cloudinaryAPISecret,
+		// 	cloudinaryCloudName,
+		// 	cloudinaryAPIKey,
+		// 	cloudinaryAPISecret,
 		// )
 
 		// if err != nil {
-		//     log.Fatalf("Failed to initialize Cloudinary, %v", err)
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create cloudinary client"})
+		// 	return
 		// }
 
 		id, err := h.service.UploadImage(c.Request.Context())
