@@ -10,7 +10,7 @@ import (
 
 const (
 	DbName   = "aura_pins"
-	CollName = "pin"
+	CollName = "pins"
 )
 
 type store struct {

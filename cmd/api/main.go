@@ -38,6 +38,7 @@ var (
 	mongoUser = common.EnvConfig("MONGO_DB_USERNAME", "root")
 	mongoPass = common.EnvConfig("MONGO_DB_PASSWORD", "admin")
 	mongoAddr = common.EnvConfig("MONGO_DB_HOST", "mongodb:27017")
+	mongoURI  = common.EnvConfig("MONGODB_URI", "mongodb://root:admin@mongodb:27017")
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 
 	zap.ReplaceGlobals(logger)
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoAddr)
+	uri := fmt.Sprintf("%s", mongoURI)
 	fmt.Println(uri)
 	mongoClient, err := connectMongoDB(uri)
 	if err != nil {

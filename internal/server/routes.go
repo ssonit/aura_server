@@ -9,9 +9,16 @@ import (
 	"go.uber.org/zap"
 
 	limits "github.com/gin-contrib/size"
+
+	user_biz "github.com/ssonit/aura_server/internal/auth/biz"
+	user_storage "github.com/ssonit/aura_server/internal/auth/storage"
+	user_http "github.com/ssonit/aura_server/internal/auth/transport/gin"
+	user_logging "github.com/ssonit/aura_server/internal/auth/utils"
+
 	media_biz "github.com/ssonit/aura_server/internal/media/biz"
 	media_storage "github.com/ssonit/aura_server/internal/media/storage"
 	media_http "github.com/ssonit/aura_server/internal/media/transport/gin"
+
 	pin_biz "github.com/ssonit/aura_server/internal/pin/biz"
 	pin_storage "github.com/ssonit/aura_server/internal/pin/storage"
 	pin_http "github.com/ssonit/aura_server/internal/pin/transport/gin"
@@ -29,6 +36,12 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	mediaService := media_biz.NewService(mediaStore)
 	mediaHandler := media_http.NewHandler(mediaService)
 
+	// User
+	userStore := user_storage.NewStore(s.db)
+	userService := user_biz.NewService(userStore)
+	userServiceWithLogging := user_logging.NewLoggingMiddleware(userService)
+	userHandler := user_http.NewHandler(userServiceWithLogging)
+
 	// Middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
@@ -43,9 +56,11 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	// Routes
 	pinGroup := r.Group("/pin")
 	mediaGroup := r.Group("/media")
+	userGroup := r.Group("/user")
 
 	pinHandler.RegisterRoutes(pinGroup)
 	mediaHandler.RegisterRoutes(mediaGroup)
+	userHandler.RegisterRoutes(userGroup)
 
 	// Health check
 	r.GET("/ping", pinHandler.Ping)
