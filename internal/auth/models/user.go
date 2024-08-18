@@ -7,21 +7,24 @@ import (
 )
 
 type User struct {
-	ID        string    `json:"id" bson:"_id,omitempty"`
+	ID        string    `json:"id" bson:"_id"`
 	Email     string    `json:"email" bson:"email"`
 	Password  string    `json:"password" bson:"password"`
 	Username  string    `json:"username" bson:"username"`
-	Bio       string    `json:"bio,omitempty" bson:"bio,omitempty"`
-	Avatar    string    `json:"avatar,omitempty" bson:"avatar,omitempty"`
-	Website   string    `json:"website,omitempty" bson:"website,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	Bio       string    `json:"bio" bson:"bio"`
+	Avatar    string    `json:"avatar" bson:"avatar"`
+	Website   string    `json:"website" bson:"website"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 }
 
 type UserCreation struct {
 	Email     string    `json:"email" bson:"email"`
 	Password  string    `json:"password" bson:"password"`
 	Username  string    `json:"username" bson:"username"`
+	Bio       string    `json:"bio" bson:"bio"`
+	Avatar    string    `json:"avatar" bson:"avatar"`
+	Website   string    `json:"website" bson:"website"`
 	CreatedAt time.Time `bson:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at"`
 }
@@ -31,6 +34,16 @@ func (u *UserCreation) MarshalBSON() ([]byte, error) {
 		u.CreatedAt = time.Now()
 	}
 	u.UpdatedAt = time.Now()
+
+	if u.Bio == "" {
+		u.Bio = ""
+	}
+	if u.Avatar == "" {
+		u.Avatar = ""
+	}
+	if u.Website == "" {
+		u.Website = ""
+	}
 
 	type my UserCreation
 	return bson.Marshal((*my)(u))
