@@ -55,7 +55,13 @@ func (s *store) GetUserByID(ctx context.Context, id string) (*models.User, error
 func (s *store) CreateUser(ctx context.Context, user *models.UserCreation) (primitive.ObjectID, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
-	newUser, err := collection.InsertOne(ctx, user)
+	data := &models.User{
+		Email:    user.Email,
+		Password: user.Password,
+		Username: user.Username,
+	}
+
+	newUser, err := collection.InsertOne(ctx, data)
 
 	id := newUser.InsertedID.(primitive.ObjectID)
 
