@@ -97,4 +97,8 @@ func NewCustomError(root error, message, key string) *AppError {
 	return NewErrorResponse(errors.New(message), message, message, key)
 }
 
-var RecordNotFound = errors.New("record not found")
+var (
+	RecordNotFound             = errors.New("record not found")
+	AuthorizationTokenRequired = errors.New("Authorization token required")
+	InvalidToken               = errors.New("Invalid token")
+)

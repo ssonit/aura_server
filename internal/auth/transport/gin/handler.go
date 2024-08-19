@@ -33,7 +33,7 @@ func (h *handler) Login() func(*gin.Context) {
 		var user models.User
 
 		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -47,7 +47,7 @@ func (h *handler) Login() func(*gin.Context) {
 		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_TOKEN"))
 			return
 		}
 
@@ -61,7 +61,7 @@ func (h *handler) Register() func(*gin.Context) {
 		var user models.UserCreation
 
 		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -75,7 +75,7 @@ func (h *handler) Register() func(*gin.Context) {
 		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_TOKEN"))
 			return
 		}
 

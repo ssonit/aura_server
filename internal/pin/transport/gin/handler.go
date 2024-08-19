@@ -7,6 +7,7 @@ import (
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
 	"github.com/ssonit/aura_server/internal/pin/utils"
+	"github.com/ssonit/aura_server/middleware"
 )
 
 type handler struct {
@@ -20,7 +21,11 @@ func NewHandler(service utils.PinService) *handler {
 }
 
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
+
+	// private
+	group.Use(middleware.AuthMiddleware())
 	group.POST("/create", h.CreatePin())
+
 }
 
 func (h *handler) CreatePin() func(*gin.Context) {
@@ -43,6 +48,7 @@ func (h *handler) CreatePin() func(*gin.Context) {
 }
 
 func (h *handler) Ping(c *gin.Context) {
+
 	c.JSON(200, gin.H{
 		"message": "pong",
 	})

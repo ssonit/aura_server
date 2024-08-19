@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/media/utils"
+	"github.com/ssonit/aura_server/middleware"
 )
 
 var (
@@ -26,6 +27,7 @@ func NewHandler(service utils.MediaService) *handler {
 }
 
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
+	group.Use(middleware.AuthMiddleware())
 	group.POST("/upload-image", h.UploadImage())
 	group.GET("/get-all-images", h.GetAllImages())
 }

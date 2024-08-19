@@ -1,13 +1,34 @@
 package models
 
-import "github.com/ssonit/aura_server/common"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Media struct {
-	common.CommonModel
-	Url       string `json:"url,omitempty" bson:"url,omitempty"`
-	SecureUrl string `json:"secure_url,omitempty" bson:"secure_url,omitempty"`
-	PublicId  string `json:"public_id,omitempty" bson:"public_id,omitempty"`
-	Format    string `json:"format,omitempty" bson:"format,omitempty"`
-	Width     int    `json:"width,omitempty" bson:"width,omitempty"`
-	Height    int    `json:"height,omitempty" bson:"height,omitempty"`
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	Url       string             `json:"url" bson:"url"`
+	SecureUrl string             `json:"secure_url" bson:"secure_url"`
+	PublicId  string             `json:"public_id" bson:"public_id"`
+	Format    string             `json:"format" bson:"format"`
+	Width     int                `json:"width" bson:"width"`
+	Height    int                `json:"height" bson:"height"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+func (m *Media) MarshalBSON() ([]byte, error) {
+	if m.CreatedAt.IsZero() {
+		m.CreatedAt = time.Now()
+	}
+	m.UpdatedAt = time.Now()
+
+	if m.ID.IsZero() {
+		m.ID = primitive.NewObjectID()
+	}
+
+	type my Media
+	return bson.Marshal((*my)(m))
 }

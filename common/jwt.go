@@ -9,7 +9,7 @@ import (
 func GenerateJWT(secret []byte, userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID": userID,
-		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 
 	tokenString, err := token.SignedString(secret)

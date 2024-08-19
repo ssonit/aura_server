@@ -19,18 +19,18 @@ type User struct {
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
 }
 
-func (u *User) MarshalBSON() ([]byte, error) {
-	if u.CreatedAt.IsZero() {
-		u.CreatedAt = time.Now()
+func (m *User) MarshalBSON() ([]byte, error) {
+	if m.CreatedAt.IsZero() {
+		m.CreatedAt = time.Now()
 	}
-	u.UpdatedAt = time.Now()
+	m.UpdatedAt = time.Now()
 
-	if u.ID.IsZero() {
-		u.ID = primitive.NewObjectID()
+	if m.ID.IsZero() {
+		m.ID = primitive.NewObjectID()
 	}
 
 	type my User
-	return bson.Marshal((*my)(u))
+	return bson.Marshal((*my)(m))
 }
 
 type UserCreation struct {
