@@ -9,6 +9,10 @@ import (
 	"github.com/ssonit/aura_server/internal/auth/utils"
 )
 
+var (
+	jwtSecret = common.EnvConfig("JWT_SECRET", "secret")
+)
+
 type handler struct {
 	service utils.UserService
 }
@@ -40,7 +44,15 @@ func (h *handler) Login() func(*gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponseWithToken(data, token))
+
 	}
 }
 
@@ -60,6 +72,13 @@ func (h *handler) Register() func(*gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, common.SimpleSuccessResponse(data))
+		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, common.SimpleSuccessResponseWithToken(data, token))
 	}
 }

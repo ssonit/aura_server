@@ -63,7 +63,7 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	userHandler.RegisterRoutes(userGroup)
 
 	// Health check
-	r.GET("/ping", pinHandler.Ping)
+	r.GET("/ping", middleware.AuthMiddleware(), pinHandler.Ping)
 
 	// Start server
 	s.logger.Info("Server listening on ", zap.String("port", httpAddr))
