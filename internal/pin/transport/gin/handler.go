@@ -26,7 +26,52 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	// private
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/create", h.CreatePin())
+	group.GET("/", h.ListPinItem())
 
+}
+
+func (h *handler) ListPinItem() func(*gin.Context) {
+	return func(c *gin.Context) {
+		var data []models.PinModel
+		var paging common.Paging
+
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		paging.Process()
+
+		var filter models.Filter
+
+		if err := c.ShouldBind(&filter); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if err := filter.DecodeQuery(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		data, err := h.service.ListPinItem(c.Request.Context(), &filter, &paging)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, filter, nil))
+
+	}
 }
 
 func (h *handler) CreatePin() func(*gin.Context) {

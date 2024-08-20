@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -39,4 +42,84 @@ func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.Ob
 	id := newUser.InsertedID.(primitive.ObjectID)
 
 	return id, err
+}
+
+func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *common.Paging, moreKeys ...string) ([]models.PinModel, error) {
+
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	total, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count documents: %v", err)
+	}
+
+	paging.Total = total
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: filter}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "media_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "media"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "users"},
+					{Key: "localField", Value: "user_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "user"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$media"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$user"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$project",
+				Value: bson.D{
+					{
+						Key:   "user.password",
+						Value: 0,
+					},
+				},
+			},
+		},
+		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
+		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find items: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	var items []models.PinModel
+
+	if err = cursor.All(ctx, &items); err != nil {
+		return nil, fmt.Errorf("failed to decode items: %v", err)
+	}
+
+	return items, nil
+
 }
