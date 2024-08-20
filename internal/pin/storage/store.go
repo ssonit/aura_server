@@ -24,5 +24,19 @@ func NewStore(db *mongo.Client) *store {
 }
 
 func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
-	return primitive.NilObjectID, nil
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	data := &models.Pin{
+		Title:       p.Title,
+		Description: p.Description,
+		UserId:      p.UserId,
+		MediaId:     p.MediaId,
+		LinkUrl:     p.LinkUrl,
+	}
+
+	newUser, err := collection.InsertOne(ctx, data)
+
+	id := newUser.InsertedID.(primitive.ObjectID)
+
+	return id, err
 }

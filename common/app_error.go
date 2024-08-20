@@ -101,4 +101,5 @@ var (
 	RecordNotFound             = errors.New("record not found")
 	AuthorizationTokenRequired = errors.New("Authorization token required")
 	InvalidToken               = errors.New("Invalid token")
+	InvalidObjectID            = errors.New("Invalid object id")
 )

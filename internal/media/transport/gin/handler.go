@@ -1,19 +1,12 @@
 package gin
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/media/utils"
 	"github.com/ssonit/aura_server/middleware"
-)
-
-var (
-	cloudinaryCloudName = common.EnvConfig("CLOUDINARY_CLOUD_NAME", "")
-	cloudinaryAPIKey    = common.EnvConfig("CLOUDINARY_API_KEY", "")
-	cloudinaryAPISecret = common.EnvConfig("CLOUDINARY_API_SECRET", "")
 )
 
 type handler struct {
@@ -29,19 +22,6 @@ func NewHandler(service utils.MediaService) *handler {
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/upload-image", h.UploadImage())
-	group.GET("/get-all-images", h.GetAllImages())
-}
-
-func (h *handler) GetAllImages() func(*gin.Context) {
-	return func(c *gin.Context) {
-		images, err := h.service.GetAllImages(c.Request.Context())
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, images)
-	}
 }
 
 func (h *handler) UploadImage() func(*gin.Context) {
@@ -49,33 +29,14 @@ func (h *handler) UploadImage() func(*gin.Context) {
 		file, err := c.FormFile("file")
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No file is received"})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(utils.ErrNoFileReceived, utils.ErrNoFileReceived.Error(), "NO_FILE_RECEIVED"))
 			return
 		}
 
-		f, err := file.Open()
+		id, err := h.service.UploadImage(c.Request.Context(), file)
+
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to open the file"})
-			return
-		}
-		defer f.Close()
-
-		fmt.Println(common.GeneratePublicID())
-
-		// cld, err := cloudinary.NewFromParams(
-		// 	cloudinaryCloudName,
-		// 	cloudinaryAPIKey,
-		// 	cloudinaryAPISecret,
-		// )
-
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create cloudinary client"})
-		// 	return
-		// }
-
-		id, err := h.service.UploadImage(c.Request.Context())
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "UPLOAD_FAILED"))
 			return
 		}
 

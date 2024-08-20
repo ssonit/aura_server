@@ -1,22 +1,41 @@
 package models
 
-import "github.com/ssonit/aura_server/common"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Pin struct {
-	common.CommonModel
-	UserId      string `json:"user_id,omitempty" bson:"user_id,omitempty"`
-	BoardId     string `json:"board_id,omitempty" bson:"board_id,omitempty"`
-	Title       string `json:"title,omitempty" bson:"title,omitempty"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	MediaId     string `json:"media_id,omitempty" bson:"media_id,omitempty"`
-	LinkUrl     string `json:"link_url,omitempty" bson:"link_url,omitempty"`
+	ID          primitive.ObjectID `json:"_id" bson:"_id"`
+	UserId      primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Title       string             `json:"title" bson:"title"`
+	Description string             `json:"description" bson:"description"`
+	MediaId     primitive.ObjectID `json:"media_id" bson:"media_id"`
+	LinkUrl     string             `json:"link_url" bson:"link_url"`
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+func (m *Pin) MarshalBSON() ([]byte, error) {
+	if m.CreatedAt.IsZero() {
+		m.CreatedAt = time.Now()
+	}
+	m.UpdatedAt = time.Now()
+
+	if m.ID.IsZero() {
+		m.ID = primitive.NewObjectID()
+	}
+
+	type my Pin
+	return bson.Marshal((*my)(m))
 }
 
 type PinCreation struct {
-	UserId      string `json:"user_id,omitempty" bson:"user_id,omitempty"`
-	BoardId     string `json:"board_id,omitempty" bson:"board_id,omitempty"`
-	Title       string `json:"title,omitempty" bson:"title,omitempty"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	MediaId     string `json:"media_id,omitempty" bson:"media_id,omitempty"`
-	LinkUrl     string `json:"link_url,omitempty" bson:"link_url,omitempty"`
+	UserId      primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Title       string             `json:"title" bson:"title"`
+	Description string             `json:"description" bson:"description"`
+	MediaId     primitive.ObjectID `json:"media_id" bson:"media_id"`
+	LinkUrl     string             `json:"link_url" bson:"link_url"`
 }

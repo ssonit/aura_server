@@ -18,10 +18,12 @@ import (
 	media_biz "github.com/ssonit/aura_server/internal/media/biz"
 	media_storage "github.com/ssonit/aura_server/internal/media/storage"
 	media_http "github.com/ssonit/aura_server/internal/media/transport/gin"
+	media_logging "github.com/ssonit/aura_server/internal/media/utils"
 
 	pin_biz "github.com/ssonit/aura_server/internal/pin/biz"
 	pin_storage "github.com/ssonit/aura_server/internal/pin/storage"
 	pin_http "github.com/ssonit/aura_server/internal/pin/transport/gin"
+	pin_logging "github.com/ssonit/aura_server/internal/pin/utils"
 )
 
 func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
@@ -29,12 +31,14 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	// Pin
 	pinStore := pin_storage.NewStore(s.db)
 	pinService := pin_biz.NewService(pinStore)
-	pinHandler := pin_http.NewHandler(pinService)
+	pinServiceWithLogging := pin_logging.NewLoggingMiddleware(pinService)
+	pinHandler := pin_http.NewHandler(pinServiceWithLogging)
 
 	// Media
 	mediaStore := media_storage.NewStore(s.db)
 	mediaService := media_biz.NewService(mediaStore)
-	mediaHandler := media_http.NewHandler(mediaService)
+	mediaServiceWithLogging := media_logging.NewLoggingMiddleware(mediaService)
+	mediaHandler := media_http.NewHandler(mediaServiceWithLogging)
 
 	// User
 	userStore := user_storage.NewStore(s.db)

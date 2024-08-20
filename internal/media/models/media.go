@@ -32,3 +32,12 @@ func (m *Media) MarshalBSON() ([]byte, error) {
 	type my Media
 	return bson.Marshal((*my)(m))
 }
+
+type MediaCreation struct {
+	Url       string `json:"url" bson:"url"`
+	SecureUrl string `json:"secure_url" bson:"secure_url"`
+	PublicId  string `json:"public_id" bson:"public_id"`
+	Format    string `json:"format" bson:"format"`
+	Width     int    `json:"width" bson:"width"`
+	Height    int    `json:"height" bson:"height"`
+}

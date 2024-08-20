@@ -8,6 +8,7 @@ import (
 	"github.com/ssonit/aura_server/internal/pin/models"
 	"github.com/ssonit/aura_server/internal/pin/utils"
 	"github.com/ssonit/aura_server/middleware"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type handler struct {
@@ -33,13 +34,30 @@ func (h *handler) CreatePin() func(*gin.Context) {
 		var pin models.PinCreation
 
 		if err := c.ShouldBindJSON(&pin); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewCustomError(utils.ErrUserIDIsBlank, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		var err error
+
+		pin.UserId, err = primitive.ObjectIDFromHex(userID.(string))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewCustomError(common.InvalidObjectID, common.InvalidObjectID.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		id, err := h.service.CreatePin(c.Request.Context(), &pin)
+
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 

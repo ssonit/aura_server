@@ -21,7 +21,7 @@ func (s *LoggingMiddleware) CreatePin(ctx context.Context, p *models.PinCreation
 
 	start := time.Now()
 	defer func() {
-		zap.L().Info("GetOrder", zap.Duration("took", time.Since(start)))
+		zap.L().Info("Create pin", zap.Duration("took", time.Since(start)))
 	}()
 
 	return s.next.CreatePin(ctx, p)

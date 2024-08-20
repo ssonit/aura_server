@@ -2,9 +2,20 @@ package biz
 
 import (
 	"context"
+	"mime/multipart"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/ssonit/aura_server/common"
+	"github.com/ssonit/aura_server/internal/media/models"
 	"github.com/ssonit/aura_server/internal/media/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	cloudinaryCloudName = common.EnvConfig("CLOUDINARY_CLOUD_NAME", "")
+	cloudinaryAPIKey    = common.EnvConfig("CLOUDINARY_API_KEY", "")
+	cloudinaryAPISecret = common.EnvConfig("CLOUDINARY_API_SECRET", "")
 )
 
 type service struct {
@@ -18,11 +29,42 @@ func NewService(store utils.MediaStore) *service {
 }
 
 // UploadImage uploads an image to the server
-func (s *service) UploadImage(ctx context.Context) (primitive.ObjectID, error) {
-	return s.store.UploadImage(ctx)
-}
+func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (primitive.ObjectID, error) {
+	f, err := file.Open()
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+	defer f.Close()
 
-// GetAllImages returns all images from the server
-func (s *service) GetAllImages(ctx context.Context) (interface{}, error) {
-	return s.store.GetAllImages(ctx)
+	cld, err := cloudinary.NewFromParams(
+		cloudinaryCloudName,
+		cloudinaryAPIKey,
+		cloudinaryAPISecret,
+	)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	publicID := common.GeneratePublicID()
+
+	res, err := cld.Upload.Upload(ctx, f, uploader.UploadParams{
+		PublicID:       publicID,
+		Transformation: "f_auto",
+	})
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	media := &models.MediaCreation{
+		Url:       res.SecureURL,
+		SecureUrl: res.SecureURL,
+		PublicId:  res.PublicID,
+		Format:    res.Format,
+		Width:     res.Width,
+		Height:    res.Height,
+	}
+
+	return s.store.UploadImage(ctx, media)
 }
