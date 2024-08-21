@@ -39,3 +39,14 @@ func (s *LoggingMiddleware) ListPinItem(ctx context.Context, filter *models.Filt
 	return s.next.ListPinItem(ctx, filter, paging)
 
 }
+
+func (s *LoggingMiddleware) GetPinById(ctx context.Context, id string) (*models.PinModel, error) {
+
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Get pin by id", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.GetPinById(ctx, id)
+
+}

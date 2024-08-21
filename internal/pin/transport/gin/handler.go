@@ -27,7 +27,24 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
+	group.GET("/:id", h.GetPinById())
 
+}
+
+func (h *handler) GetPinById() func(*gin.Context) {
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		data, err := h.service.GetPinById(c.Request.Context(), id)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
 }
 
 func (h *handler) ListPinItem() func(*gin.Context) {
@@ -36,9 +53,7 @@ func (h *handler) ListPinItem() func(*gin.Context) {
 		var paging common.Paging
 
 		if err := c.ShouldBind(&paging); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -47,25 +62,19 @@ func (h *handler) ListPinItem() func(*gin.Context) {
 		var filter models.Filter
 
 		if err := c.ShouldBind(&filter); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		if err := filter.DecodeQuery(); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		data, err := h.service.ListPinItem(c.Request.Context(), &filter, &paging)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -95,7 +104,7 @@ func (h *handler) CreatePin() func(*gin.Context) {
 		pin.UserId, err = primitive.ObjectIDFromHex(userID.(string))
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(common.InvalidObjectID, common.InvalidObjectID.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -111,7 +120,6 @@ func (h *handler) CreatePin() func(*gin.Context) {
 }
 
 func (h *handler) Ping(c *gin.Context) {
-
 	c.JSON(200, gin.H{
 		"message": "pong",
 	})

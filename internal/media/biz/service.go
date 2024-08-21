@@ -32,7 +32,7 @@ func NewService(store utils.MediaStore) *service {
 func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (primitive.ObjectID, error) {
 	f, err := file.Open()
 	if err != nil {
-		return primitive.NilObjectID, err
+		return primitive.NilObjectID, utils.ErrUnableToOpenFile
 	}
 	defer f.Close()
 
@@ -43,7 +43,7 @@ func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (
 	)
 
 	if err != nil {
-		return primitive.NilObjectID, err
+		return primitive.NilObjectID, utils.ErrCldNewFromParams
 	}
 
 	publicID := common.GeneratePublicID()
@@ -54,7 +54,7 @@ func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (
 	})
 
 	if err != nil {
-		return primitive.NilObjectID, err
+		return primitive.NilObjectID, utils.ErrCannotUploadCld
 	}
 
 	media := &models.MediaCreation{
@@ -66,5 +66,11 @@ func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (
 		Height:    res.Height,
 	}
 
-	return s.store.UploadImage(ctx, media)
+	data, err := s.store.UploadImage(ctx, media)
+
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrCannotCreateEntity
+	}
+
+	return data, nil
 }

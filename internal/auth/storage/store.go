@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ssonit/aura_server/internal/auth/models"
+	"github.com/ssonit/aura_server/internal/auth/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,7 +31,7 @@ func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.User,
 	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrNoDocuments
 	}
 
 	return &user, nil
@@ -46,7 +47,7 @@ func (s *store) GetUserByID(ctx context.Context, id string) (*models.User, error
 	err := collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
 
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrNoDocuments
 	}
 
 	return &user, nil
@@ -63,7 +64,11 @@ func (s *store) CreateUser(ctx context.Context, user *models.UserCreation) (prim
 
 	newUser, err := collection.InsertOne(ctx, data)
 
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrNotInserted
+	}
+
 	id := newUser.InsertedID.(primitive.ObjectID)
 
-	return id, err
+	return id, nil
 }

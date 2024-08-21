@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ssonit/aura_server/internal/media/models"
+	"github.com/ssonit/aura_server/internal/media/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -35,7 +36,11 @@ func (s *store) UploadImage(ctx context.Context, media *models.MediaCreation) (p
 
 	newUser, err := collection.InsertOne(ctx, data)
 
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrNotInserted
+	}
+
 	id := newUser.InsertedID.(primitive.ObjectID)
 
-	return id, err
+	return id, nil
 }

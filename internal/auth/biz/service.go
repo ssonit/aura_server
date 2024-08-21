@@ -3,7 +3,6 @@ package biz
 import (
 	"context"
 
-	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"github.com/ssonit/aura_server/internal/auth/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -22,7 +21,7 @@ func (s *service) Register(ctx context.Context, user *models.UserCreation) (*mod
 	_, err := s.store.GetUserByEmail(ctx, user.Email)
 
 	if err == nil {
-		return nil, common.NewCustomError(utils.ErrEmailAlreadyExists, utils.ErrEmailAlreadyExists.Error(), "EMAIL_ALREADY_EXISTS")
+		return nil, utils.ErrEmailAlreadyExists
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -36,13 +35,13 @@ func (s *service) Register(ctx context.Context, user *models.UserCreation) (*mod
 	id, err := s.store.CreateUser(ctx, user)
 
 	if err != nil {
-		return nil, common.ErrCannotCreateEntity("user", err)
+		return nil, utils.ErrCannotCreateEntity
 	}
 
 	data, err := s.store.GetUserByID(ctx, id.Hex())
 
 	if err != nil {
-		return nil, common.ErrCannotGetEntity("user", err)
+		return nil, utils.ErrCannotGetEntity
 	}
 
 	data.Password = ""
@@ -54,13 +53,13 @@ func (s *service) Login(ctx context.Context, email, password string) (*models.Us
 	data, err := s.store.GetUserByEmail(ctx, email)
 
 	if err != nil {
-		return nil, common.ErrCannotGetEntity("user", err)
+		return nil, utils.ErrCannotGetEntity
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(data.Password), []byte(password))
 
 	if err != nil {
-		return nil, common.NewCustomError(utils.ErrInvalidEmailOrPassword, utils.ErrInvalidEmailOrPassword.Error(), "INVALID_PASSWORD")
+		return nil, utils.ErrEmailAlreadyExists
 	}
 
 	data.Password = ""

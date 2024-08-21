@@ -40,7 +40,7 @@ func (h *handler) Login() func(*gin.Context) {
 		data, err := h.service.Login(c.Request.Context(), user.Email, user.Password)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, err)
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -68,7 +68,7 @@ func (h *handler) Register() func(*gin.Context) {
 		data, err := h.service.Register(c.Request.Context(), &user)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, err)
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
