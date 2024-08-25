@@ -24,6 +24,11 @@ import (
 	pin_storage "github.com/ssonit/aura_server/internal/pin/storage"
 	pin_http "github.com/ssonit/aura_server/internal/pin/transport/gin"
 	pin_logging "github.com/ssonit/aura_server/internal/pin/utils"
+
+	board_biz "github.com/ssonit/aura_server/internal/board/biz"
+	board_storage "github.com/ssonit/aura_server/internal/board/storage"
+	board_http "github.com/ssonit/aura_server/internal/board/transport/gin"
+	board_logging "github.com/ssonit/aura_server/internal/board/utils"
 )
 
 func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
@@ -46,6 +51,12 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	userServiceWithLogging := user_logging.NewLoggingMiddleware(userService)
 	userHandler := user_http.NewHandler(userServiceWithLogging)
 
+	// Board
+	boardStore := board_storage.NewStore(s.db)
+	boardService := board_biz.NewService(boardStore)
+	boardServiceWithLogging := board_logging.NewLoggingMiddleware(boardService)
+	boardHandler := board_http.NewHandler(boardServiceWithLogging)
+
 	// Middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
@@ -61,10 +72,12 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 	pinGroup := r.Group("/pin")
 	mediaGroup := r.Group("/media")
 	userGroup := r.Group("/user")
+	boardGroup := r.Group("/board")
 
 	pinHandler.RegisterRoutes(pinGroup)
 	mediaHandler.RegisterRoutes(mediaGroup)
 	userHandler.RegisterRoutes(userGroup)
+	boardHandler.RegisterRoutes(boardGroup)
 
 	// Health check
 	r.GET("/ping", middleware.AuthMiddleware(), pinHandler.Ping)
