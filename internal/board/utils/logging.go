@@ -21,7 +21,7 @@ func (s *LoggingMiddleware) CreateBoard(ctx context.Context, p *models.BoardCrea
 
 	start := time.Now()
 	defer func() {
-		zap.L().Info("Create pin", zap.Duration("took", time.Since(start)))
+		zap.L().Info("Create board", zap.Duration("took", time.Since(start)))
 	}()
 
 	return s.next.CreateBoard(ctx, p)
@@ -31,7 +31,7 @@ func (s *LoggingMiddleware) ListBoardItem(ctx context.Context, filter *models.Fi
 
 	start := time.Now()
 	defer func() {
-		zap.L().Info("Create pin", zap.Duration("took", time.Since(start)))
+		zap.L().Info("List board", zap.Duration("took", time.Since(start)))
 	}()
 
 	return s.next.ListBoardItem(ctx, filter)

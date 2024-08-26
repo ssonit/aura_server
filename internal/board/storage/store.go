@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	DbName           = "aura_pins"
-	CollName         = "boards"
-	CollNameBoardPin = "board_pin"
+	DbName   = "aura_pins"
+	CollName = "boards"
 )
 
 type store struct {
@@ -36,13 +35,13 @@ func (s *store) CreateBoard(ctx context.Context, p *models.BoardCreation) (primi
 		IsPrivate: p.IsPrivate,
 	}
 
-	newUser, err := collection.InsertOne(ctx, data)
+	newData, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
 		return primitive.NilObjectID, utils.ErrNotInserted
 	}
 
-	id := newUser.InsertedID.(primitive.ObjectID)
+	id := newData.InsertedID.(primitive.ObjectID)
 
 	return id, nil
 }

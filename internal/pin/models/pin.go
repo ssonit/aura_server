@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	User_Model "github.com/ssonit/aura_server/internal/auth/models"
+	Board_Model "github.com/ssonit/aura_server/internal/board/models"
 	Media_Model "github.com/ssonit/aura_server/internal/media/models"
 )
 
@@ -51,6 +52,7 @@ type PinModel struct {
 }
 
 type PinCreation struct {
+	BoardId     primitive.ObjectID `json:"board_id" bson:"board_id"`
 	UserId      primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Title       string             `json:"title" bson:"title"`
 	Description string             `json:"description" bson:"description"`
@@ -76,4 +78,43 @@ func (f *Filter) DecodeQuery() error {
 		}
 	}
 	return nil
+}
+
+type BoardPin struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	BoardId   primitive.ObjectID `json:"board_id" bson:"board_id"`
+	PinId     primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+}
+
+func (m *BoardPin) MarshalBSON() ([]byte, error) {
+	if m.CreatedAt.IsZero() {
+		m.CreatedAt = time.Now()
+	}
+	if m.ID.IsZero() {
+		m.ID = primitive.NewObjectID()
+	}
+
+	type my BoardPin
+	return bson.Marshal((*my)(m))
+}
+
+type BoardPinModel struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	BoardId   primitive.ObjectID `json:"board_id" bson:"board_id"`
+	PinId     primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+	Board     Board_Model.Board  `json:"board,omitempty" bson:"board,omitempty"`
+	Pin       Pin                `json:"pin,omitempty" bson:"pin,omitempty"`
+	Media     Media_Model.Media  `json:"media,omitempty" bson:"media,omitempty"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+type BoardPinCreation struct {
+	BoardId primitive.ObjectID `json:"board_id" bson:"board_id"`
+	PinId   primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+}
+
+type BoardPinFilter struct {
+	BoardId primitive.ObjectID `json:"board_id" bson:"board_id"`
 }

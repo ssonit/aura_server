@@ -9,4 +9,5 @@ var (
 	ErrCannotCreateEntity = errors.New("Cannot create entity")
 	ErrCannotGetEntity    = errors.New("Cannot get entity")
 	ErrNotInserted        = errors.New("Failed to insert document")
+	ErrDataIsZero         = errors.New("Data is zero")
 )

@@ -17,12 +17,31 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) ([]models.BoardPinModel, error) {
+	data, err := s.store.ListBoardPinItem(ctx, p)
+	if err != nil {
+		return nil, utils.ErrCannotGetEntity
+	}
+
+	return data, nil
+}
+
 func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
 
 	data, err := s.store.Create(ctx, p)
+
 	if err != nil {
 		return primitive.NilObjectID, utils.ErrCannotCreateEntity
 	}
+
+	if data.IsZero() {
+		return primitive.NilObjectID, utils.ErrDataIsZero
+	}
+
+	s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
+		BoardId: p.BoardId,
+		PinId:   data,
+	})
 
 	return data, nil
 

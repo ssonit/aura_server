@@ -28,7 +28,32 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
 	group.GET("/:id", h.GetPinById())
+	group.GET("/:id/board", h.ListBoardPinItem())
 
+}
+
+func (h *handler) ListBoardPinItem() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		boardId := c.Param("id")
+
+		var data []models.BoardPinModel
+
+		BoardId, err := primitive.ObjectIDFromHex(boardId)
+
+		filter := models.BoardPinFilter{
+			BoardId: BoardId,
+		}
+
+		data, err = h.service.ListBoardPinItem(c.Request.Context(), &filter)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, nil, filter, nil))
+	}
 }
 
 func (h *handler) GetPinById() func(*gin.Context) {
