@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
@@ -91,14 +90,14 @@ func (s *store) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) 
 	cursor, err := collection.Aggregate(ctx, pipeline)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find items: %v", err)
+		return nil, utils.ErrFailedToFindEntity
 	}
 	defer cursor.Close(ctx)
 
 	var items []models.BoardPinModel
 
 	if err = cursor.All(ctx, &items); err != nil {
-		return nil, fmt.Errorf("failed to decode items: %v", err)
+		return nil, utils.ErrFailedToDecode
 	}
 
 	return items, nil
@@ -116,7 +115,7 @@ func (s *store) CreateBoardPin(ctx context.Context, p *models.BoardPinCreation) 
 	newData, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrNotInserted
+		return primitive.NilObjectID, utils.ErrCannotCreateBoardPin
 	}
 
 	id := newData.InsertedID.(primitive.ObjectID)
@@ -138,7 +137,7 @@ func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.Ob
 	newData, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrNotInserted
+		return primitive.NilObjectID, utils.ErrCannotCreatePin
 	}
 
 	id := newData.InsertedID.(primitive.ObjectID)
@@ -202,14 +201,14 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 	cursor, err := collection.Aggregate(ctx, pipeline)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find items: %v", err)
+		return nil, utils.ErrFailedToFindEntity
 	}
 	defer cursor.Close(ctx)
 
 	if cursor.Next(ctx) {
 		var item models.PinModel
 		if err := cursor.Decode(&item); err != nil {
-			return nil, fmt.Errorf("failed to decode item: %v", err)
+			return nil, utils.ErrFailedToDecode
 		}
 
 		// Remove the password from the user data before returning
@@ -219,7 +218,7 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, fmt.Errorf("cursor error: %v", err)
+		return nil, utils.ErrCursorError
 	}
 
 	return nil, nil
@@ -231,7 +230,7 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 
 	total, err := collection.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to count documents: %v", err)
+		return nil, utils.ErrFailedToCount
 	}
 
 	paging.Total = total
@@ -291,14 +290,14 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 	cursor, err := collection.Aggregate(ctx, pipeline)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find items: %v", err)
+		return nil, utils.ErrFailedToFindEntity
 	}
 	defer cursor.Close(ctx)
 
 	var items []models.PinModel
 
 	if err = cursor.All(ctx, &items); err != nil {
-		return nil, fmt.Errorf("failed to decode items: %v", err)
+		return nil, utils.ErrFailedToDecode
 	}
 
 	return items, nil

@@ -37,7 +37,7 @@ func (s *store) UploadImage(ctx context.Context, media *models.MediaCreation) (p
 	newUser, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrNotInserted
+		return primitive.NilObjectID, utils.ErrCannotCreateEntity
 	}
 
 	id := newUser.InsertedID.(primitive.ObjectID)

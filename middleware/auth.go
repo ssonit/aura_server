@@ -18,7 +18,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		headerAuthorization := c.GetHeader("Authorization")
 		if headerAuthorization == "" {
-			c.JSON(http.StatusUnauthorized, common.NewCustomError(common.AuthorizationTokenRequired, common.AuthorizationTokenRequired.Error(), "AUTHORIZATION_TOKEN_REQUIRED"))
+			c.JSON(http.StatusUnauthorized, common.NewFullCustomError(http.StatusUnauthorized, common.AuthorizationTokenRequired.Error(), "AUTHORIZATION_TOKEN_REQUIRED"))
 			c.Abort()
 			return
 		}
@@ -32,7 +32,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, common.NewCustomError(err, err.Error(), "INVALID_TOKEN"))
+			c.JSON(http.StatusUnauthorized, common.NewFullCustomError(http.StatusUnauthorized, err.Error(), "INVALID_TOKEN"))
 			c.Abort()
 			return
 		}

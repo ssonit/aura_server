@@ -19,7 +19,7 @@ func NewService(store utils.BoardStore) *service {
 func (s *service) CreateBoard(ctx context.Context, p *models.BoardCreation) (primitive.ObjectID, error) {
 	data, err := s.store.CreateBoard(ctx, p)
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrCannotCreateEntity
+		return primitive.NilObjectID, err
 	}
 
 	return data, nil
@@ -28,7 +28,7 @@ func (s *service) CreateBoard(ctx context.Context, p *models.BoardCreation) (pri
 func (s *service) ListBoardItem(ctx context.Context, filter *models.Filter) ([]models.BoardModel, error) {
 	data, err := s.store.ListBoardItem(ctx, filter)
 	if err != nil {
-		return nil, utils.ErrCannotGetEntity
+		return nil, err
 	}
 
 	return data, nil

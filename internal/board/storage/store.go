@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ssonit/aura_server/internal/board/models"
 	"github.com/ssonit/aura_server/internal/board/utils"
@@ -38,7 +37,7 @@ func (s *store) CreateBoard(ctx context.Context, p *models.BoardCreation) (primi
 	newData, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrNotInserted
+		return primitive.NilObjectID, utils.ErrCannotCreateEntity
 	}
 
 	id := newData.InsertedID.(primitive.ObjectID)
@@ -84,14 +83,14 @@ func (s *store) ListBoardItem(ctx context.Context, filter *models.Filter) ([]mod
 	cursor, err := collection.Aggregate(ctx, pipeline)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find items: %v", err)
+		return nil, utils.ErrFailedToFindEntity
 	}
 	defer cursor.Close(ctx)
 
 	var items []models.BoardModel
 
 	if err = cursor.All(ctx, &items); err != nil {
-		return nil, fmt.Errorf("failed to decode items: %v", err)
+		return nil, utils.ErrFailedToDecode
 	}
 
 	return items, nil

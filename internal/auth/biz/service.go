@@ -35,13 +35,13 @@ func (s *service) Register(ctx context.Context, user *models.UserCreation) (*mod
 	id, err := s.store.CreateUser(ctx, user)
 
 	if err != nil {
-		return nil, utils.ErrCannotCreateEntity
+		return nil, err
 	}
 
 	data, err := s.store.GetUserByID(ctx, id.Hex())
 
 	if err != nil {
-		return nil, utils.ErrCannotGetEntity
+		return nil, err
 	}
 
 	data.Password = ""
@@ -53,13 +53,13 @@ func (s *service) Login(ctx context.Context, email, password string) (*models.Us
 	data, err := s.store.GetUserByEmail(ctx, email)
 
 	if err != nil {
-		return nil, utils.ErrCannotGetEntity
+		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(data.Password), []byte(password))
 
 	if err != nil {
-		return nil, utils.ErrEmailAlreadyExists
+		return nil, utils.ErrEmailOrPassInvalid
 	}
 
 	data.Password = ""

@@ -69,7 +69,7 @@ func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (
 	data, err := s.store.UploadImage(ctx, media)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrCannotCreateEntity
+		return primitive.NilObjectID, err
 	}
 
 	return data, nil

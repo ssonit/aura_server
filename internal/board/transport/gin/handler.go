@@ -36,14 +36,14 @@ func (h *handler) CreateBoard() func(*gin.Context) {
 		var board models.BoardCreation
 
 		if err := c.ShouldBindJSON(&board); err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		userID, exists := c.Get("userID")
 
 		if !exists {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(utils.ErrUserIDIsBlank, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
 			return
 		}
 
@@ -52,14 +52,18 @@ func (h *handler) CreateBoard() func(*gin.Context) {
 		board.UserId, err = primitive.ObjectIDFromHex(userID.(string))
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		id, err := h.service.CreateBoard(c.Request.Context(), &board)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
 			return
 		}
 
@@ -78,16 +82,25 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 		userID, exists := c.Get("userID")
 
 		if !exists {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(utils.ErrUserIDIsBlank, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		filter.UserId, err = primitive.ObjectIDFromHex(userID.(string))
 
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
 		data, err = h.service.ListBoardItem(c.Request.Context(), &filter)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
 			return
 		}
 

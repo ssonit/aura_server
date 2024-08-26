@@ -31,7 +31,7 @@ func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.User,
 	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 
 	if err != nil {
-		return nil, utils.ErrNoDocuments
+		return nil, utils.ErrUserNotFound
 	}
 
 	return &user, nil
@@ -47,7 +47,7 @@ func (s *store) GetUserByID(ctx context.Context, id string) (*models.User, error
 	err := collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
 
 	if err != nil {
-		return nil, utils.ErrNoDocuments
+		return nil, utils.ErrUserNotFound
 	}
 
 	return &user, nil
@@ -65,7 +65,7 @@ func (s *store) CreateUser(ctx context.Context, user *models.UserCreation) (prim
 	newUser, err := collection.InsertOne(ctx, data)
 
 	if err != nil {
-		return primitive.NilObjectID, utils.ErrNotInserted
+		return primitive.NilObjectID, utils.ErrCannotCreateEntity
 	}
 
 	id := newUser.InsertedID.(primitive.ObjectID)

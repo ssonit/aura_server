@@ -30,24 +30,28 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 
 func (h *handler) Login() func(*gin.Context) {
 	return func(c *gin.Context) {
-		var user models.User
+		var user models.UserLogin
 
 		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		data, err := h.service.Login(c.Request.Context(), user.Email, user.Password)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
 			return
 		}
 
 		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_TOKEN"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
 			return
 		}
 
@@ -61,21 +65,25 @@ func (h *handler) Register() func(*gin.Context) {
 		var user models.UserCreation
 
 		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		data, err := h.service.Register(c.Request.Context(), &user)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
 			return
 		}
 
 		token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex())
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_TOKEN"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
 			return
 		}
 

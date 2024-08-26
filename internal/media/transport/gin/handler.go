@@ -29,14 +29,18 @@ func (h *handler) UploadImage() func(*gin.Context) {
 		file, err := c.FormFile("file")
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
 
 		id, err := h.service.UploadImage(c.Request.Context(), file)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, common.NewCustomError(err, err.Error(), "INVALID_REQUEST"))
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
 			return
 		}
 

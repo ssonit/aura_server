@@ -33,6 +33,11 @@ func (m *User) MarshalBSON() ([]byte, error) {
 	return bson.Marshal((*my)(m))
 }
 
+type UserLogin struct {
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
+}
+
 type UserCreation struct {
 	Email    string `json:"email" bson:"email"`
 	Password string `json:"password" bson:"password"`
