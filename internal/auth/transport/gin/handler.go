@@ -14,6 +14,10 @@ import (
 var (
 	jwtSecret        = common.EnvConfig("JWT_SECRET", "secret")
 	jwtRefreshSecret = common.EnvConfig("JWT_REFRESH_SECRET", "secret")
+	jwtSecretExp     = common.EnvConfig("JWT_SECRET_EXP", "30")
+	jwtRefreshExp    = common.EnvConfig("JWT_REFRESH_EXP", "24")
+	expSecretTime    = 6
+	expRefreshTime   = 24
 )
 
 type handler struct {
@@ -55,25 +59,16 @@ func (h *handler) RefreshToken() func(*gin.Context) {
 			return
 		}
 
-		userID, exists := c.Get("userID")
+		// decode refresh token
+		claims, err := common.DecodedToken(refreshToken.Token, []byte(jwtRefreshSecret))
 
-		if !exists {
-			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
-			return
-		}
+		userID := claims["userID"].(string)
 
-		userIDStr, ok := userID.(string)
+		expSecret := time.Now().Add(time.Minute * time.Duration(expSecretTime)).Unix()
+		expRefresh := time.Now().Add(time.Hour * time.Duration(expRefreshTime)).Unix()
 
-		if !ok {
-			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
-			return
-		}
-
-		exp := time.Now().Add(time.Minute * 30).Unix()
-		expRefresh := time.Now().Add(time.Hour * 24).Unix()
-
-		access_token, err := common.GenerateJWT([]byte(jwtSecret), userIDStr, exp)
-		refresh_token, err := common.GenerateJWT([]byte(jwtSecret), userIDStr, expRefresh)
+		access_token, err := common.GenerateJWT([]byte(jwtSecret), userID, expSecret)
+		refresh_token, err := common.GenerateJWT([]byte(jwtSecret), userID, expRefresh)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
@@ -82,7 +77,7 @@ func (h *handler) RefreshToken() func(*gin.Context) {
 
 		h.service.CreateRefreshToken(c.Request.Context(), &models.RefreshTokenCreation{
 			Token:  refresh_token,
-			UserId: userIDStr,
+			UserId: userID,
 			Exp:    time.Unix(expRefresh, 0),
 		})
 
@@ -140,11 +135,11 @@ func (h *handler) Login() func(*gin.Context) {
 			return
 		}
 
-		exp := time.Now().Add(time.Minute * 30).Unix()
-		expRefresh := time.Now().Add(time.Hour * 24).Unix()
+		expSecret := time.Now().Add(time.Minute * time.Duration(expSecretTime)).Unix()
+		expRefresh := time.Now().Add(time.Hour * time.Duration(expRefreshTime)).Unix()
 
-		access_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), exp)
-		refresh_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), expRefresh)
+		access_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), expSecret)
+		refresh_token, err := common.GenerateJWT([]byte(jwtRefreshSecret), data.ID.Hex(), expRefresh)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
@@ -187,11 +182,11 @@ func (h *handler) Register() func(*gin.Context) {
 			return
 		}
 
-		exp := time.Now().Add(time.Minute * 30).Unix()
-		expRefresh := time.Now().Add(time.Hour * 24).Unix()
+		expSecret := time.Now().Add(time.Minute * time.Duration(expSecretTime)).Unix()
+		expRefresh := time.Now().Add(time.Hour * time.Duration(expRefreshTime)).Unix()
 
-		access_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), exp)
-		refresh_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), expRefresh)
+		access_token, err := common.GenerateJWT([]byte(jwtSecret), data.ID.Hex(), expSecret)
+		refresh_token, err := common.GenerateJWT([]byte(jwtRefreshSecret), data.ID.Hex(), expRefresh)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
