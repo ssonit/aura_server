@@ -29,10 +29,10 @@ func NewHandler(service utils.UserService) *handler {
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/register", h.Register())
 	group.POST("/login", h.Login())
+	group.POST("/refresh-token", h.RefreshToken())
 
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/logout", h.Logout())
-	group.POST("/refresh-token", h.RefreshToken())
 }
 
 func (h *handler) RefreshToken() func(*gin.Context) {
