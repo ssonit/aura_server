@@ -16,6 +16,14 @@ func NewService(s utils.UserStore) *service {
 	return &service{store: s}
 }
 
+func (s *service) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error {
+	return s.store.CreateRefreshToken(ctx, p)
+}
+
+func (s *service) Logout(ctx context.Context, refresh_token string) error {
+	return s.store.DeleteRefreshToken(ctx, refresh_token)
+}
+
 func (s *service) Register(ctx context.Context, user *models.UserCreation) (*models.User, error) {
 	// check user exists
 	_, err := s.store.GetUserByEmail(ctx, user.Email)

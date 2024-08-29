@@ -33,3 +33,21 @@ func (s *LoggingMiddleware) Login(ctx context.Context, email, password string) (
 
 	return s.next.Login(ctx, email, password)
 }
+
+func (s *LoggingMiddleware) Logout(ctx context.Context, refresh_token string) error {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Logout user", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.Logout(ctx, refresh_token)
+}
+
+func (s *LoggingMiddleware) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Create refresh token", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.CreateRefreshToken(ctx, p)
+}

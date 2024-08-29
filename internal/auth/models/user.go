@@ -43,3 +43,33 @@ type UserCreation struct {
 	Password string `json:"password" bson:"password"`
 	Username string `json:"username" bson:"username"`
 }
+
+type RefreshToken struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	Token     string             `json:"token" bson:"token"`
+	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Exp       time.Time          `json:"exp" bson:"exp"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+}
+
+func (m *RefreshToken) MarshalBSON() ([]byte, error) {
+	if m.CreatedAt.IsZero() {
+		m.CreatedAt = time.Now()
+	}
+	if m.ID.IsZero() {
+		m.ID = primitive.NewObjectID()
+	}
+
+	type my RefreshToken
+	return bson.Marshal((*my)(m))
+}
+
+type RefreshTokenCreation struct {
+	Token  string    `json:"token" bson:"token"`
+	UserId string    `json:"user_id" bson:"user_id"`
+	Exp    time.Time `json:"exp" bson:"exp"`
+}
+
+type RefreshTokenSelection struct {
+	Token string `json:"token" bson:"token"`
+}

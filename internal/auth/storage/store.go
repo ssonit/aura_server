@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	DbName   = "aura_pins"
-	CollName = "users"
+	DbName               = "aura_pins"
+	CollName             = "users"
+	CollNameRefreshToken = "refresh_tokens"
 )
 
 type store struct {
@@ -21,6 +22,38 @@ type store struct {
 
 func NewStore(db *mongo.Client) *store {
 	return &store{db: db}
+}
+
+func (s *store) DeleteRefreshToken(ctx context.Context, refresh_token string) error {
+	collection := s.db.Database(DbName).Collection(CollNameRefreshToken)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"token": refresh_token})
+
+	if err != nil {
+		return utils.ErrCannotLogout
+	}
+
+	return nil
+}
+
+func (s *store) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error {
+	collection := s.db.Database(DbName).Collection(CollNameRefreshToken)
+
+	userID, _ := primitive.ObjectIDFromHex(p.UserId)
+
+	data := &models.RefreshToken{
+		Token:  p.Token,
+		UserId: userID,
+		Exp:    p.Exp,
+	}
+
+	_, err := collection.InsertOne(ctx, data)
+
+	if err != nil {
+		return utils.ErrCannotCreateEntity
+	}
+
+	return nil
 }
 
 func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
