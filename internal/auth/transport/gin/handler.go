@@ -16,7 +16,7 @@ var (
 	jwtRefreshSecret = common.EnvConfig("JWT_REFRESH_SECRET", "secret")
 	jwtSecretExp     = common.EnvConfig("JWT_SECRET_EXP", "30")
 	jwtRefreshExp    = common.EnvConfig("JWT_REFRESH_EXP", "24")
-	expSecretTime    = 6
+	expSecretTime    = 60 // 2
 	expRefreshTime   = 24
 )
 
@@ -68,7 +68,7 @@ func (h *handler) RefreshToken() func(*gin.Context) {
 		expRefresh := time.Now().Add(time.Hour * time.Duration(expRefreshTime)).Unix()
 
 		access_token, err := common.GenerateJWT([]byte(jwtSecret), userID, expSecret)
-		refresh_token, err := common.GenerateJWT([]byte(jwtSecret), userID, expRefresh)
+		refresh_token, err := common.GenerateJWT([]byte(jwtRefreshSecret), userID, expRefresh)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_TOKEN"))
