@@ -16,8 +16,8 @@ var (
 	jwtRefreshSecret = common.EnvConfig("JWT_REFRESH_SECRET", "secret")
 	jwtSecretExp     = common.EnvConfig("JWT_SECRET_EXP", "30")
 	jwtRefreshExp    = common.EnvConfig("JWT_REFRESH_EXP", "24")
-	expSecretTime    = 60 // 2
-	expRefreshTime   = 24
+	expSecretTime    = 365 * 24 * 60 // 1 year
+	expRefreshTime   = 24 * 30 * 12  // 1 year
 )
 
 type handler struct {
