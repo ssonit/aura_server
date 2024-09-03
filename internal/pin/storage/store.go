@@ -228,7 +228,19 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 
 	collection := s.db.Database(DbName).Collection(CollName)
 
-	total, err := collection.CountDocuments(ctx, filter)
+	user_id, _ := primitive.ObjectIDFromHex(filter.UserId)
+
+	filterMap := map[string]interface{}{}
+
+	if filter.UserId != "" {
+		filterMap["user_id"] = user_id
+	}
+
+	if filter.Title != "" {
+		filterMap["title"] = filter.Title
+	}
+
+	total, err := collection.CountDocuments(ctx, filterMap)
 	if err != nil {
 		return nil, utils.ErrFailedToCount
 	}
@@ -236,7 +248,7 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 	paging.Total = total
 
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: filter}},
+		bson.D{{Key: "$match", Value: filterMap}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{

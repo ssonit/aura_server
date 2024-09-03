@@ -61,7 +61,8 @@ type PinCreation struct {
 }
 
 type Filter struct {
-	Title string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
+	Title  string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
+	UserId string `json:"user_id" bson:"user_id" form:"user_id"`
 }
 
 func (f *Filter) DecodeQuery() error {
