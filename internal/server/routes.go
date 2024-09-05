@@ -59,9 +59,10 @@ func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
 
 	// Middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Accept", "X-Request-ID", "X-CSRF-Token"},
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Accept", "X-Request-ID", "X-CSRF-Token", "Authorization"},
+		AllowCredentials: true,
 	}))
 	r.Use(middleware.Recovery())
 	r.Use(secure.New(secure.Config{}))

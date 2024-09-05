@@ -44,6 +44,10 @@ func (h *handler) UploadImage() func(*gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(id))
+		res := map[string]interface{}{
+			"id": id,
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(res))
 	}
 }
