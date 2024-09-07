@@ -18,13 +18,13 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
-func (s *LoggingMiddleware) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) ([]models.BoardPinModel, error) {
+func (s *LoggingMiddleware) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFilter, paging *common.Paging) ([]models.BoardPinModel, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("List board pin", zap.Duration("took", time.Since(start)))
 	}()
 
-	return s.next.ListBoardPinItem(ctx, p)
+	return s.next.ListBoardPinItem(ctx, filter, paging)
 }
 
 func (s *LoggingMiddleware) CreatePin(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {

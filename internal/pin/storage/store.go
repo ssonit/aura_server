@@ -27,11 +27,18 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
-func (s *store) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) ([]models.BoardPinModel, error) {
+func (s *store) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFilter, paging *common.Paging) ([]models.BoardPinModel, error) {
 	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
 
+	total, err := collection.CountDocuments(ctx, bson.D{{Key: "board_id", Value: filter.BoardId}})
+	if err != nil {
+		return nil, utils.ErrFailedToCount
+	}
+
+	paging.Total = total
+
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "board_id", Value: p.BoardId}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "board_id", Value: filter.BoardId}}}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{
@@ -86,6 +93,8 @@ func (s *store) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) 
 				},
 			},
 		},
+		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
+		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
 	}
 	cursor, err := collection.Aggregate(ctx, pipeline)
 

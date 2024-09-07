@@ -38,6 +38,14 @@ func (h *handler) ListBoardPinItem() func(*gin.Context) {
 		boardId := c.Param("id")
 
 		var data []models.BoardPinModel
+		var paging common.Paging
+
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		paging.Process()
 
 		BoardId, err := primitive.ObjectIDFromHex(boardId)
 
@@ -50,7 +58,7 @@ func (h *handler) ListBoardPinItem() func(*gin.Context) {
 			BoardId: BoardId,
 		}
 
-		data, err = h.service.ListBoardPinItem(c.Request.Context(), &filter)
+		data, err = h.service.ListBoardPinItem(c.Request.Context(), &filter, &paging)
 
 		if err != nil {
 			if customErr, ok := err.(*common.CustomError); ok {
@@ -61,7 +69,7 @@ func (h *handler) ListBoardPinItem() func(*gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, common.NewSuccessResponse(data, nil, filter, nil))
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, filter, nil))
 	}
 }
 

@@ -12,7 +12,7 @@ type PinService interface {
 	CreatePin(context.Context, *models.PinCreation) (primitive.ObjectID, error)
 	ListPinItem(ctx context.Context, filter *models.Filter, paging *common.Paging) ([]models.PinModel, error)
 	GetPinById(ctx context.Context, id string) (*models.PinModel, error)
-	ListBoardPinItem(context.Context, *models.BoardPinFilter) ([]models.BoardPinModel, error)
+	ListBoardPinItem(context.Context, *models.BoardPinFilter, *common.Paging) ([]models.BoardPinModel, error)
 }
 
 type PinStore interface {
@@ -20,5 +20,5 @@ type PinStore interface {
 	ListItem(ctx context.Context, filter *models.Filter, paging *common.Paging, moreKeys ...string) ([]models.PinModel, error)
 	GetItem(ctx context.Context, filter map[string]interface{}) (*models.PinModel, error)
 	CreateBoardPin(context.Context, *models.BoardPinCreation) (primitive.ObjectID, error)
-	ListBoardPinItem(context.Context, *models.BoardPinFilter) ([]models.BoardPinModel, error)
+	ListBoardPinItem(context.Context, *models.BoardPinFilter, *common.Paging) ([]models.BoardPinModel, error)
 }

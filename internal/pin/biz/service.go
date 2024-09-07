@@ -17,8 +17,8 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
-func (s *service) ListBoardPinItem(ctx context.Context, p *models.BoardPinFilter) ([]models.BoardPinModel, error) {
-	data, err := s.store.ListBoardPinItem(ctx, p)
+func (s *service) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFilter, paging *common.Paging) ([]models.BoardPinModel, error) {
+	data, err := s.store.ListBoardPinItem(ctx, filter, paging)
 	if err != nil {
 		return nil, err
 	}
