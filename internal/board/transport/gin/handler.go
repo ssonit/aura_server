@@ -25,9 +25,41 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 
 	// private
 	group.Use(middleware.AuthMiddleware())
+	group.GET("/:id", h.GetBoardItem())
 	group.POST("/create", h.CreateBoard())
 	group.GET("/", h.ListBoardItem())
 
+}
+
+func (h *handler) GetBoardItem() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		if id == "" {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrBoardIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		boardID, err := primitive.ObjectIDFromHex(id)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		board, err := h.service.GetBoardItem(c.Request.Context(), boardID)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(board))
+	}
 }
 
 func (h *handler) CreateBoard() func(*gin.Context) {

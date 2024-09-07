@@ -10,9 +10,11 @@ import (
 type BoardService interface {
 	CreateBoard(context.Context, *models.BoardCreation) (primitive.ObjectID, error)
 	ListBoardItem(context.Context, *models.Filter) ([]models.BoardModel, error)
+	GetBoardItem(context.Context, primitive.ObjectID) (*models.BoardModel, error)
 }
 
 type BoardStore interface {
 	CreateBoard(context.Context, *models.BoardCreation) (primitive.ObjectID, error)
 	ListBoardItem(context.Context, *models.Filter) ([]models.BoardModel, error)
+	GetBoardItem(context.Context, primitive.ObjectID) (*models.BoardModel, error)
 }

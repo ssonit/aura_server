@@ -16,6 +16,15 @@ func NewService(store utils.BoardStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*models.BoardModel, error) {
+	data, err := s.store.GetBoardItem(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 func (s *service) CreateBoard(ctx context.Context, p *models.BoardCreation) (primitive.ObjectID, error) {
 	data, err := s.store.CreateBoard(ctx, p)
 	if err != nil {

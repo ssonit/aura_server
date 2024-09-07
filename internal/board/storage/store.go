@@ -25,6 +25,19 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
+func (s *store) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*models.BoardModel, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	var data models.BoardModel
+
+	if err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&data); err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	return &data, nil
+
+}
+
 func (s *store) CreateBoard(ctx context.Context, p *models.BoardCreation) (primitive.ObjectID, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 

@@ -11,4 +11,5 @@ var (
 	ErrCannotGetEntity    = common.NewFullCustomError(500, "Cannot get entity", "CANNOT_GET_ENTITY")
 	ErrFailedToFindEntity = common.NewFullCustomError(500, "Failed to find entity", "FAILED_TO_FIND_ENTITY")
 	ErrFailedToDecode     = common.NewFullCustomError(500, "Failed to decode", "FAILED_TO_DECODE")
+	ErrBoardIDIsBlank     = common.NewFullCustomError(400, "Board id is blank", "BOARD_ID_BLANK")
 )
