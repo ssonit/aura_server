@@ -16,4 +16,7 @@ var (
 	ErrCursorError          = common.NewFullCustomError(500, "Cursor error", "CURSOR_ERROR")
 	ErrFailedToCount        = common.NewFullCustomError(500, "Failed to count", "FAILED_TO_COUNT")
 	ErrCannotCreateBoardPin = common.NewFullCustomError(500, "Cannot create board pin", "CANNOT_CREATE_BOARD_PIN")
+	ErrUserNotPermitted     = common.NewFullCustomError(403, "User not permitted", "USER_NOT_PERMITTED")
+	ErrCannotUpdatePin      = common.NewFullCustomError(500, "Cannot update pin", "CANNOT_UPDATE_PIN")
+	ErrCannotDeleteBoardPin = common.NewFullCustomError(500, "Cannot delete board pin", "CANNOT_DELETE_BOARD_PIN")
 )

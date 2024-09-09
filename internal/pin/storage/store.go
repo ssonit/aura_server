@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
@@ -25,6 +26,104 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) DeleteBoardPin(ctx context.Context, filter *models.BoardPinFilter) error {
+	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
+
+	fmt.Println(filter.BoardId, filter.PinId, "filter")
+	_, err := collection.DeleteOne(ctx, bson.M{"pin_id": filter.PinId, "user_id": filter.UserId})
+
+	if err != nil {
+		return utils.ErrCannotDeleteBoardPin
+	}
+
+	return nil
+}
+
+func (s *store) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilter) (*models.BoardPinModel, error) {
+	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "pin_id", Value: filter.PinId}, {Key: "user_id", Value: filter.UserId}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "pins"},
+					{Key: "localField", Value: "pin_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "pin"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "boards"},
+					{Key: "localField", Value: "board_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "board"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "pin.media_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "media"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$pin"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$board"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$media"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var item models.BoardPinModel
+		if err := cursor.Decode(&item); err != nil {
+			return nil, utils.ErrFailedToDecode
+		}
+
+		return &item, nil
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, utils.ErrCursorError
+	}
+
+	return nil, nil
 }
 
 func (s *store) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFilter, paging *common.Paging) ([]models.BoardPinModel, error) {
@@ -119,6 +218,7 @@ func (s *store) CreateBoardPin(ctx context.Context, p *models.BoardPinCreation) 
 	data := &models.BoardPin{
 		BoardId: p.BoardId,
 		PinId:   p.PinId,
+		UserId:  p.UserId,
 	}
 
 	newData, err := collection.InsertOne(ctx, data)
@@ -130,6 +230,22 @@ func (s *store) CreateBoardPin(ctx context.Context, p *models.BoardPinCreation) 
 	id := newData.InsertedID.(primitive.ObjectID)
 
 	return id, nil
+}
+
+func (s *store) UpdatePin(ctx context.Context, id string, pin *models.PinUpdate) error {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "title", Value: pin.Title}, {Key: "description", Value: pin.Description}, {Key: "link_url", Value: pin.LinkUrl}}}}
+
+	_, err := collection.UpdateByID(ctx, oID, update)
+
+	if err != nil {
+		return utils.ErrCannotUpdatePin
+	}
+
+	return nil
 }
 
 func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {

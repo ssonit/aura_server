@@ -60,6 +60,13 @@ type PinCreation struct {
 	LinkUrl     string             `json:"link_url" bson:"link_url"`
 }
 
+type PinUpdate struct {
+	Title       string             `json:"title" bson:"title"`
+	Description string             `json:"description" bson:"description"`
+	LinkUrl     string             `json:"link_url" bson:"link_url"`
+	BoardId     primitive.ObjectID `json:"board_id" bson:"board_id"`
+}
+
 type Filter struct {
 	Title  string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
 	UserId string `json:"user_id" bson:"user_id" form:"user_id"`
@@ -85,6 +92,7 @@ type BoardPin struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
 	BoardId   primitive.ObjectID `json:"board_id" bson:"board_id"`
 	PinId     primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }
 
@@ -104,9 +112,11 @@ type BoardPinModel struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
 	BoardId   primitive.ObjectID `json:"board_id" bson:"board_id"`
 	PinId     primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Board     Board_Model.Board  `json:"board,omitempty" bson:"board,omitempty"`
 	Pin       Pin                `json:"pin,omitempty" bson:"pin,omitempty"`
 	Media     Media_Model.Media  `json:"media,omitempty" bson:"media,omitempty"`
+	User      User_Model.User    `json:"user,omitempty" bson:"user,omitempty"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
 }
@@ -114,8 +124,15 @@ type BoardPinModel struct {
 type BoardPinCreation struct {
 	BoardId primitive.ObjectID `json:"board_id" bson:"board_id"`
 	PinId   primitive.ObjectID `json:"pin_id" bson:"pin_id"`
+	UserId  primitive.ObjectID `json:"user_id" bson:"user_id"`
 }
 
 type BoardPinFilter struct {
+	BoardId primitive.ObjectID `json:"board_id,omitempty" bson:"board_id,omitempty"`
+	PinId   primitive.ObjectID `json:"pin_id,omitempty" bson:"pin_id,omitempty"`
+	UserId  primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
+}
+
+type BoardPinUpdate struct {
 	BoardId primitive.ObjectID `json:"board_id" bson:"board_id"`
 }

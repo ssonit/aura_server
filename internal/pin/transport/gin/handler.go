@@ -28,14 +28,55 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
 	group.GET("/:id", h.GetPinById())
-	group.GET("/:id/board", h.ListBoardPinItem())
+	group.PUT("/:id", h.UpdatePin())
+	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
+	group.GET("/board-pin/detail/:pinId", h.GetBoardPinItem())
 
+}
+
+func (h *handler) GetBoardPinItem() func(*gin.Context) {
+
+	return func(c *gin.Context) {
+		pinId := c.Param("pinId")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		var filter models.BoardPinFilter
+		var err error
+
+		filter.PinId, err = primitive.ObjectIDFromHex(pinId)
+		filter.UserId, err = primitive.ObjectIDFromHex(userID.(string))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		data, err := h.service.GetBoardPinItem(c.Request.Context(), &filter)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, nil, filter, nil))
+
+	}
 }
 
 func (h *handler) ListBoardPinItem() func(*gin.Context) {
 	return func(c *gin.Context) {
 
-		boardId := c.Param("id")
+		boardId := c.Param("boardId")
 
 		var data []models.BoardPinModel
 		var paging common.Paging
@@ -70,6 +111,44 @@ func (h *handler) ListBoardPinItem() func(*gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, filter, nil))
+	}
+}
+
+func (h *handler) UpdatePin() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		var pin models.PinUpdate
+
+		if err := c.ShouldBindJSON(&pin); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.UpdatePin(c.Request.Context(), id, &pin, userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin updated successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
 	}
 }
 

@@ -17,6 +17,15 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilter) (*models.BoardPinModel, error) {
+	data, err := s.store.GetBoardPinItem(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 func (s *service) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFilter, paging *common.Paging) ([]models.BoardPinModel, error) {
 	data, err := s.store.ListBoardPinItem(ctx, filter, paging)
 	if err != nil {
@@ -24,6 +33,51 @@ func (s *service) ListBoardPinItem(ctx context.Context, filter *models.BoardPinF
 	}
 
 	return data, nil
+}
+
+func (s *service) UpdatePin(ctx context.Context, id string, pin *models.PinUpdate, userId string) error {
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	data, err := s.store.GetItem(ctx, map[string]interface{}{"_id": oID})
+
+	if err != nil {
+		return err
+	}
+
+	if data.UserId.Hex() != userId {
+		return utils.ErrUserNotPermitted
+	}
+
+	err = s.store.UpdatePin(ctx, id, pin)
+
+	if err != nil {
+		return err
+	}
+
+	var filter models.BoardPinFilter
+
+	userOId, _ := primitive.ObjectIDFromHex(userId)
+
+	filter.PinId = oID
+	filter.UserId = userOId
+
+	err = s.store.DeleteBoardPin(ctx, &filter)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
+		BoardId: pin.BoardId,
+		PinId:   oID,
+		UserId:  userOId,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
@@ -41,6 +95,7 @@ func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primiti
 	_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
 		BoardId: p.BoardId,
 		PinId:   data,
+		UserId:  p.UserId,
 	})
 
 	if err != nil {
