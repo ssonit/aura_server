@@ -68,8 +68,10 @@ type PinUpdate struct {
 }
 
 type Filter struct {
-	Title  string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
-	UserId string `json:"user_id" bson:"user_id" form:"user_id"`
+	Title   string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
+	UserId  string `json:"user_id" bson:"user_id" form:"user_id"`
+	SortKey string `json:"sort_key,omitempty" bson:"sort_key,omitempty" form:"sort_key"`
+	Sort    string `json:"sort,omitempty" bson:"sort,omitempty" form:"sort"`
 }
 
 func (f *Filter) DecodeQuery() error {

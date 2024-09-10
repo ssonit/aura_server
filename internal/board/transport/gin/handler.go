@@ -28,7 +28,13 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/:id", h.GetBoardItem())
 	group.POST("/create", h.CreateBoard())
 	group.GET("/", h.ListBoardItem())
+	group.PUT("/:id", h.UpdateBoardItem())
 
+}
+
+func (h *handler) UpdateBoardItem() func(*gin.Context) {
+	return func(c *gin.Context) {
+	}
 }
 
 func (h *handler) GetBoardItem() func(*gin.Context) {

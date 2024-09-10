@@ -365,6 +365,16 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 		filterMap["title"] = filter.Title
 	}
 
+	var sortOrder int = 1
+	if filter.Sort == "desc" {
+		sortOrder = -1
+	}
+
+	var sortKey string = "created_at"
+	if filter.SortKey != "" {
+		sortKey = filter.SortKey
+	}
+
 	total, err := collection.CountDocuments(ctx, filterMap)
 	if err != nil {
 		return nil, utils.ErrFailedToCount
@@ -422,6 +432,7 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 		},
 		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
 		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: sortKey, Value: sortOrder}}}},
 	}
 
 	cursor, err := collection.Aggregate(ctx, pipeline)
