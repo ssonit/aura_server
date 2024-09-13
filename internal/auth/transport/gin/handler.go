@@ -62,9 +62,7 @@ func (h *handler) GetUser() func(*gin.Context) {
 
 func (h *handler) Me() func(*gin.Context) {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*models.User)
 
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(user))
 	}
 }
 

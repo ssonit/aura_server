@@ -67,8 +67,6 @@ func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.User,
 		return nil, utils.ErrUserNotFound
 	}
 
-	user.Password = ""
-
 	return &user, nil
 }
 
@@ -84,8 +82,6 @@ func (s *store) GetUserByID(ctx context.Context, id string) (*models.User, error
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
-
-	user.Password = ""
 
 	return &user, nil
 }

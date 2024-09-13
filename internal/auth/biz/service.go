@@ -17,7 +17,15 @@ func NewService(s utils.UserStore) *service {
 }
 
 func (s *service) GetUser(ctx context.Context, id string) (*models.User, error) {
-	return s.store.GetUserByID(ctx, id)
+	user, err := s.store.GetUserByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = ""
+
+	return user, nil
 }
 
 func (s *service) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error {
