@@ -1,10 +1,11 @@
 package common
 
 type successRes struct {
-	Data   interface{} `json:"data"`
-	Paging interface{} `json:"paging,omitempty"`
-	Filter interface{} `json:"filter,omitempty"`
-	Token  interface{} `json:"token,omitempty"`
+	Data    interface{} `json:"data"`
+	Message string      `json:"message,omitempty"`
+	Paging  interface{} `json:"paging,omitempty"`
+	Filter  interface{} `json:"filter,omitempty"`
+	Token   interface{} `json:"token,omitempty"`
 }
 
 func NewSuccessResponse(data, paging, filter, token interface{}) *successRes {

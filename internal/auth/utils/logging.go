@@ -16,7 +16,16 @@ func NewLoggingMiddleware(next UserService) UserService {
 	return &LoggingMiddleware{next}
 }
 
-func (s *LoggingMiddleware) GetUser(ctx context.Context, id string) (*models.User, error) {
+func (s *LoggingMiddleware) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Update user", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.UpdateUser(ctx, id, user)
+}
+
+func (s *LoggingMiddleware) GetUser(ctx context.Context, id string) (*models.UserModel, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("Get user", zap.Duration("took", time.Since(start)))
@@ -25,7 +34,7 @@ func (s *LoggingMiddleware) GetUser(ctx context.Context, id string) (*models.Use
 	return s.next.GetUser(ctx, id)
 }
 
-func (s *LoggingMiddleware) Register(ctx context.Context, user *models.UserCreation) (*models.User, error) {
+func (s *LoggingMiddleware) Register(ctx context.Context, user *models.UserCreation) (*models.UserModel, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("Register user", zap.Duration("took", time.Since(start)))
@@ -34,7 +43,7 @@ func (s *LoggingMiddleware) Register(ctx context.Context, user *models.UserCreat
 	return s.next.Register(ctx, user)
 }
 
-func (s *LoggingMiddleware) Login(ctx context.Context, email, password string) (*models.User, error) {
+func (s *LoggingMiddleware) Login(ctx context.Context, email, password string) (*models.UserModel, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("Login user", zap.Duration("took", time.Since(start)))

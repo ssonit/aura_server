@@ -38,7 +38,38 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.GET("/me", h.Me())
 	group.GET("/:id", h.GetUser())
+	group.PUT("/:id", h.UpdateUser())
 	group.POST("/logout", h.Logout())
+}
+
+func (h *handler) UpdateUser() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		var user models.UserUpdate
+
+		if err := c.ShouldBindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.UpdateUser(c.Request.Context(), id, &user)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Updated user successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
 }
 
 func (h *handler) GetUser() func(*gin.Context) {

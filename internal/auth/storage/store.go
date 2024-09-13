@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"github.com/ssonit/aura_server/internal/auth/utils"
@@ -22,6 +23,33 @@ type store struct {
 
 func NewStore(db *mongo.Client) *store {
 	return &store{db: db}
+}
+
+func (s *store) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {
+
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	update := bson.D{
+		{Key: "username", Value: user.Username},
+		{Key: "bio", Value: user.Bio},
+		{Key: "website", Value: user.Website},
+	}
+
+	if user.AvatarID != "" {
+		avatarOID, _ := primitive.ObjectIDFromHex(user.AvatarID)
+		update = append(update, bson.E{Key: "avatar_id", Value: avatarOID})
+	}
+
+	_, err := collection.UpdateByID(ctx, oID, bson.D{{Key: "$set", Value: update}})
+
+	if err != nil {
+		return utils.ErrCannotUpdateUser
+	}
+
+	return nil
+
 }
 
 func (s *store) DeleteRefreshToken(ctx context.Context, refresh_token string) error {
@@ -56,34 +84,120 @@ func (s *store) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCr
 	return nil
 }
 
-func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+func (s *store) CheckUserByEmail(ctx context.Context, email string) (bool, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
 	var user models.User
-
 	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 
 	if err != nil {
-		return nil, utils.ErrUserNotFound
+		return false, err
 	}
 
-	return &user, nil
+	return true, nil
+
 }
 
-func (s *store) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+func (s *store) GetUserByEmail(ctx context.Context, email string) (*models.UserModel, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
-	var user models.User
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "email", Value: email}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "avatar_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "avatar"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$avatar"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var item models.UserModel
+		if err := cursor.Decode(&item); err != nil {
+			fmt.Println(err)
+
+			return nil, utils.ErrFailedToDecode
+		}
+
+		return &item, nil
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, utils.ErrCursorError
+	}
+
+	return nil, nil
+
+}
+
+func (s *store) GetUserByID(ctx context.Context, id string) (*models.UserModel, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
 
 	oid, _ := primitive.ObjectIDFromHex(id)
 
-	err := collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
-
-	if err != nil {
-		return nil, utils.ErrUserNotFound
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: oid}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "avatar_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "avatar"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$avatar"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
 	}
 
-	return &user, nil
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var item models.UserModel
+		if err := cursor.Decode(&item); err != nil {
+			return nil, utils.ErrFailedToDecode
+		}
+
+		return &item, nil
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, utils.ErrCursorError
+	}
+
+	return nil, nil
+
 }
 
 func (s *store) CreateUser(ctx context.Context, user *models.UserCreation) (primitive.ObjectID, error) {

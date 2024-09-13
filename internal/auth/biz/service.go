@@ -16,7 +16,12 @@ func NewService(s utils.UserStore) *service {
 	return &service{store: s}
 }
 
-func (s *service) GetUser(ctx context.Context, id string) (*models.User, error) {
+func (s *service) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {
+	return s.store.UpdateUser(ctx, id, user)
+
+}
+
+func (s *service) GetUser(ctx context.Context, id string) (*models.UserModel, error) {
 	user, err := s.store.GetUserByID(ctx, id)
 
 	if err != nil {
@@ -36,11 +41,11 @@ func (s *service) Logout(ctx context.Context, refresh_token string) error {
 	return s.store.DeleteRefreshToken(ctx, refresh_token)
 }
 
-func (s *service) Register(ctx context.Context, user *models.UserCreation) (*models.User, error) {
+func (s *service) Register(ctx context.Context, user *models.UserCreation) (*models.UserModel, error) {
 	// check user exists
-	_, err := s.store.GetUserByEmail(ctx, user.Email)
+	exists, err := s.store.CheckUserByEmail(ctx, user.Email)
 
-	if err == nil {
+	if err == nil && exists {
 		return nil, utils.ErrEmailAlreadyExists
 	}
 
@@ -69,7 +74,7 @@ func (s *service) Register(ctx context.Context, user *models.UserCreation) (*mod
 	return data, nil
 }
 
-func (s *service) Login(ctx context.Context, email, password string) (*models.User, error) {
+func (s *service) Login(ctx context.Context, email, password string) (*models.UserModel, error) {
 	data, err := s.store.GetUserByEmail(ctx, email)
 
 	if err != nil {

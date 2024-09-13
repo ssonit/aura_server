@@ -13,4 +13,8 @@ var (
 	ErrCannotLogout         = common.NewFullCustomError(500, "Failed to logout", "LOGOUT_ERROR")
 	ErrUserIDIsBlank        = common.NewFullCustomError(400, "User id is blank", "USER_ID_BLANK")
 	ErrRefreshTokenNotFound = common.NewFullCustomError(404, "Refresh token not found", "REFRESH_TOKEN")
+	ErrFailedToFindEntity   = common.NewFullCustomError(500, "Failed to find entity", "FAILED_TO_FIND_ENTITY")
+	ErrFailedToDecode       = common.NewFullCustomError(500, "Failed to decode", "FAILED_TO_DECODE")
+	ErrCursorError          = common.NewFullCustomError(500, "Cursor error", "CURSOR_ERROR")
+	ErrCannotUpdateUser     = common.NewFullCustomError(500, "Failed to update user", "UPDATE_USER_ERROR")
 )
