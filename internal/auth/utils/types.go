@@ -20,4 +20,5 @@ type UserService interface {
 	Register(ctx context.Context, user *models.UserCreation) (*models.User, error)
 	Login(ctx context.Context, email, password string) (*models.User, error)
 	Logout(ctx context.Context, refresh_token string) error
+	GetUser(ctx context.Context, id string) (*models.User, error)
 }

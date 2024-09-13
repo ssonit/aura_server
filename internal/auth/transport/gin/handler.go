@@ -36,7 +36,36 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/refresh-token", h.RefreshToken())
 
 	group.Use(middleware.AuthMiddleware())
+	group.GET("/me", h.Me())
+	group.GET("/:id", h.GetUser())
 	group.POST("/logout", h.Logout())
+}
+
+func (h *handler) GetUser() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		data, err := h.service.GetUser(c.Request.Context(), id)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
+}
+
+func (h *handler) Me() func(*gin.Context) {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(*models.User)
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(user))
+	}
 }
 
 func (h *handler) RefreshToken() func(*gin.Context) {

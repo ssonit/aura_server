@@ -16,6 +16,15 @@ func NewLoggingMiddleware(next UserService) UserService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) GetUser(ctx context.Context, id string) (*models.User, error) {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Get user", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.GetUser(ctx, id)
+}
+
 func (s *LoggingMiddleware) Register(ctx context.Context, user *models.UserCreation) (*models.User, error) {
 	start := time.Now()
 	defer func() {

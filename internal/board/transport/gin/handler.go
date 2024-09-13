@@ -117,14 +117,20 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 
 		var err error
 
-		userID, exists := c.Get("userID")
+		userId := c.Query("userId")
 
-		if !exists {
-			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
-			return
+		if userId == "" {
+			userIDValue, exists := c.Get("userID")
+			if !exists {
+				c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+				return
+			}
+
+			userId = userIDValue.(string)
+
 		}
 
-		filter.UserId, err = primitive.ObjectIDFromHex(userID.(string))
+		filter.UserId, err = primitive.ObjectIDFromHex(userId)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))

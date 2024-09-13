@@ -16,6 +16,10 @@ func NewService(s utils.UserStore) *service {
 	return &service{store: s}
 }
 
+func (s *service) GetUser(ctx context.Context, id string) (*models.User, error) {
+	return s.store.GetUserByID(ctx, id)
+}
+
 func (s *service) CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error {
 	return s.store.CreateRefreshToken(ctx, p)
 }
