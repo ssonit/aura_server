@@ -39,16 +39,16 @@ func (m *Pin) MarshalBSON() ([]byte, error) {
 }
 
 type PinModel struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id"`
-	UserId      primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Title       string             `json:"title" bson:"title"`
-	Description string             `json:"description" bson:"description"`
-	MediaId     primitive.ObjectID `json:"media_id" bson:"media_id"`
-	LinkUrl     string             `json:"link_url" bson:"link_url"`
-	User        User_Model.User    `json:"user,omitempty" bson:"user,omitempty"`
-	Media       Media_Model.Media  `json:"media,omitempty" bson:"media,omitempty"`
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
+	ID          primitive.ObjectID   `json:"id" bson:"_id"`
+	UserId      primitive.ObjectID   `json:"user_id" bson:"user_id"`
+	Title       string               `json:"title" bson:"title"`
+	Description string               `json:"description" bson:"description"`
+	MediaId     primitive.ObjectID   `json:"media_id" bson:"media_id"`
+	LinkUrl     string               `json:"link_url" bson:"link_url"`
+	User        User_Model.UserModel `json:"user,omitempty" bson:"user,omitempty"`
+	Media       Media_Model.Media    `json:"media,omitempty" bson:"media,omitempty"`
+	CreatedAt   time.Time            `json:"created_at" bson:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at" bson:"updated_at"`
 }
 
 type PinCreation struct {

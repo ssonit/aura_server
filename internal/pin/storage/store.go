@@ -312,6 +312,24 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 			},
 		},
 		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "user.avatar_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "user.avatar"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$user.avatar"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
 			{Key: "$project",
 				Value: bson.D{
 					{
