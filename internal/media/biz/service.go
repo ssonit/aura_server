@@ -28,6 +28,10 @@ func NewService(store utils.MediaStore) *service {
 	}
 }
 
+func (s *service) GetMedia(ctx context.Context, id string) (*models.Media, error) {
+	return s.store.GetMedia(ctx, id)
+}
+
 // UploadImage uploads an image to the server
 func (s *service) UploadImage(ctx context.Context, file *multipart.FileHeader) (primitive.ObjectID, error) {
 	f, err := file.Open()

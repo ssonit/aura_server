@@ -22,6 +22,26 @@ func NewHandler(service utils.MediaService) *handler {
 func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/upload-image", h.UploadImage())
+	group.GET("/:id", h.GetMedia())
+}
+
+func (h *handler) GetMedia() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		data, err := h.service.GetMedia(c.Request.Context(), id)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
 }
 
 func (h *handler) UploadImage() func(*gin.Context) {

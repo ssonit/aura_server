@@ -10,8 +10,10 @@ import (
 
 type MediaService interface {
 	UploadImage(context.Context, *multipart.FileHeader) (primitive.ObjectID, error)
+	GetMedia(ctx context.Context, id string) (*models.Media, error)
 }
 
 type MediaStore interface {
 	UploadImage(context.Context, *models.MediaCreation) (primitive.ObjectID, error)
+	GetMedia(ctx context.Context, id string) (*models.Media, error)
 }
