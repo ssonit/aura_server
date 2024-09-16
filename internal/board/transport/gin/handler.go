@@ -1,7 +1,6 @@
 package gin
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -124,18 +123,15 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 		userId := c.Query("userId")
 		isPrivate := c.Query("isPrivate")
 
-		if isPrivate != "" {
-			privateValue, err = strconv.ParseBool(isPrivate)
+		privateValue, err = strconv.ParseBool(isPrivate)
 
-			if err != nil {
-				c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
-				return
-			}
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
 
-			if privateValue {
-				filter.IsPrivate = privateValue
-			}
-
+		if privateValue {
+			filter.IsPrivate = privateValue
 		}
 
 		if userId == "" {
@@ -155,8 +151,6 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
-
-		fmt.Println(filter)
 
 		data, err = h.service.ListBoardItem(c.Request.Context(), &filter)
 

@@ -74,8 +74,16 @@ func (s *store) CreateBoard(ctx context.Context, p *models.BoardCreation) (primi
 func (s *store) ListBoardItem(ctx context.Context, filter *models.Filter) ([]models.BoardModel, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
+	filterMap := bson.D{
+		{Key: "user_id", Value: filter.UserId},
+	}
+
+	if !filter.IsPrivate {
+		filterMap = append(filterMap, bson.E{Key: "isPrivate", Value: false})
+	}
+
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "user_id", Value: filter.UserId}, {Key: "isPrivate", Value: filter.IsPrivate}}}},
+		bson.D{{Key: "$match", Value: filterMap}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{
