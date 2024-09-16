@@ -57,6 +57,21 @@ func (s *store) DeleteBoardPin(ctx context.Context, filter *models.BoardPinFilte
 	return nil
 }
 
+func (s *store) DeleteBoardPinById(ctx context.Context, id primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
+
+	// oID, _ := primitive.ObjectIDFromHex(id)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": id})
+
+	if err != nil {
+		return utils.ErrCannotDeleteBoardPin
+	}
+
+	return nil
+
+}
+
 func (s *store) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilter) (*models.BoardPinModel, error) {
 	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
 
@@ -113,6 +128,13 @@ func (s *store) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilt
 				Value: bson.D{
 					{Key: "path", Value: "$media"},
 					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$match",
+				Value: bson.D{
+					{Key: "board.type", Value: "custom"},
 				},
 			},
 		},

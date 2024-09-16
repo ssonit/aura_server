@@ -54,14 +54,14 @@ func (s *service) UpdatePin(ctx context.Context, id string, pin *models.PinUpdat
 		return err
 	}
 
-	var filter models.BoardPinFilter
+	// var filter models.BoardPinFilter
 
 	userOId, _ := primitive.ObjectIDFromHex(userId)
 
-	filter.PinId = oID
-	filter.UserId = userOId
+	// filter.PinId = oID
+	// filter.UserId = userOId
 
-	err = s.store.DeleteBoardPin(ctx, &filter)
+	err = s.store.DeleteBoardPinById(ctx, pin.BoardPinId)
 
 	if err != nil {
 		return err

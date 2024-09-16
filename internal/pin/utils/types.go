@@ -27,4 +27,5 @@ type PinStore interface {
 	GetBoardPinItem(context.Context, *models.BoardPinFilter) (*models.BoardPinModel, error)
 	DeleteBoardPin(context.Context, *models.BoardPinFilter) error
 	GetBoardByUserId(context.Context, primitive.ObjectID) (primitive.ObjectID, error)
+	DeleteBoardPinById(context.Context, primitive.ObjectID) error
 }

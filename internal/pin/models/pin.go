@@ -65,6 +65,7 @@ type PinUpdate struct {
 	Description string             `json:"description" bson:"description"`
 	LinkUrl     string             `json:"link_url" bson:"link_url"`
 	BoardId     primitive.ObjectID `json:"board_id" bson:"board_id"`
+	BoardPinId  primitive.ObjectID `json:"board_pin_id" bson:"board_pin_id"`
 }
 
 type Filter struct {

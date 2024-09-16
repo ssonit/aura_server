@@ -75,7 +75,7 @@ func (s *store) ListBoardItem(ctx context.Context, filter *models.Filter) ([]mod
 	collection := s.db.Database(DbName).Collection(CollName)
 
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: filter}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "user_id", Value: filter.UserId}, {Key: "isPrivate", Value: filter.IsPrivate}}}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{
