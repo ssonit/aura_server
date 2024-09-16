@@ -81,6 +81,15 @@ func (s *service) UpdatePin(ctx context.Context, id string, pin *models.PinUpdat
 }
 
 func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
+	boardId, err := s.store.GetBoardByUserId(ctx, p.UserId)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if boardId.IsZero() {
+		return primitive.NilObjectID, utils.ErrBoardNotFound
+	}
 
 	data, err := s.store.Create(ctx, p)
 
@@ -92,6 +101,18 @@ func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primiti
 		return primitive.NilObjectID, utils.ErrDataIsZero
 	}
 
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	// Create board pin for all pins
+	_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
+		BoardId: boardId,
+		PinId:   data,
+		UserId:  p.UserId,
+	})
+
+	// Create board pin for the pin
 	_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
 		BoardId: p.BoardId,
 		PinId:   data,

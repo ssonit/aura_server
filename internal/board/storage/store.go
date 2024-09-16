@@ -25,6 +25,18 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
+func (s *store) UserHasBoards(ctx context.Context, id primitive.ObjectID) (bool, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	count, err := collection.CountDocuments(ctx, bson.M{"user_id": id})
+
+	if err != nil {
+		return false, utils.ErrFailedToFindEntity
+	}
+
+	return count > 0, nil
+}
+
 func (s *store) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*models.BoardModel, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
@@ -45,6 +57,7 @@ func (s *store) CreateBoard(ctx context.Context, p *models.BoardCreation) (primi
 		UserId:    p.UserId,
 		Name:      p.Name,
 		IsPrivate: p.IsPrivate,
+		Type:      p.Type,
 	}
 
 	newData, err := collection.InsertOne(ctx, data)

@@ -14,6 +14,7 @@ type Board struct {
 	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Name      string             `json:"name" bson:"name"`
 	IsPrivate bool               `json:"isPrivate" bson:"isPrivate"`
+	Type      string             `json:"type" bson:"type"` // "all_pins" hoặc "custom"
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
 }
@@ -36,10 +37,12 @@ type BoardCreation struct {
 	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Name      string             `json:"name" bson:"name"`
 	IsPrivate bool               `json:"isPrivate" bson:"isPrivate"`
+	Type      string             `json:"type" bson:"type"` // "all_pins" hoặc "custom"
 }
 
 type Filter struct {
-	UserId primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
+	UserId    primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
+	IsPrivate bool               `json:"isPrivate,omitempty" bson:"isPrivate,omitempty"`
 }
 
 type BoardModel struct {
@@ -47,6 +50,7 @@ type BoardModel struct {
 	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Name      string             `json:"name" bson:"name"`
 	IsPrivate bool               `json:"isPrivate" bson:"isPrivate"`
+	Type      string             `json:"type" bson:"type"` // "all_pins" hoặc "custom"
 	User      User_Model.User    `json:"user,omitempty" bson:"user,omitempty"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`

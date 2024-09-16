@@ -26,7 +26,30 @@ func (s *service) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*mod
 }
 
 func (s *service) CreateBoard(ctx context.Context, p *models.BoardCreation) (primitive.ObjectID, error) {
-	data, err := s.store.CreateBoard(ctx, p)
+	userHasBoards, err := s.store.UserHasBoards(ctx, p.UserId)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if !userHasBoards {
+		_, err := s.store.CreateBoard(ctx, &models.BoardCreation{
+			UserId:    p.UserId,
+			Name:      "All Pins",
+			IsPrivate: true,
+			Type:      "all_pins",
+		})
+
+		if err != nil {
+			return primitive.NilObjectID, err
+		}
+	}
+
+	data, err := s.store.CreateBoard(ctx, &models.BoardCreation{
+		UserId:    p.UserId,
+		Name:      p.Name,
+		IsPrivate: p.IsPrivate,
+		Type:      "custom",
+	})
 	if err != nil {
 		return primitive.NilObjectID, err
 	}

@@ -1,7 +1,9 @@
 package gin
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ssonit/aura_server/common"
@@ -117,7 +119,24 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 
 		var err error
 
+		var privateValue bool
+
 		userId := c.Query("userId")
+		isPrivate := c.Query("isPrivate")
+
+		if isPrivate != "" {
+			privateValue, err = strconv.ParseBool(isPrivate)
+
+			if err != nil {
+				c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+				return
+			}
+
+			if privateValue {
+				filter.IsPrivate = privateValue
+			}
+
+		}
 
 		if userId == "" {
 			userIDValue, exists := c.Get("userID")
@@ -136,6 +155,8 @@ func (h *handler) ListBoardItem() func(*gin.Context) {
 			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
 			return
 		}
+
+		fmt.Println(filter)
 
 		data, err = h.service.ListBoardItem(c.Request.Context(), &filter)
 

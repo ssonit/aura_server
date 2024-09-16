@@ -17,4 +17,5 @@ type BoardStore interface {
 	CreateBoard(context.Context, *models.BoardCreation) (primitive.ObjectID, error)
 	ListBoardItem(context.Context, *models.Filter) ([]models.BoardModel, error)
 	GetBoardItem(context.Context, primitive.ObjectID) (*models.BoardModel, error)
+	UserHasBoards(context.Context, primitive.ObjectID) (bool, error)
 }

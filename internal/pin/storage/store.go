@@ -10,12 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	Board_Model "github.com/ssonit/aura_server/internal/board/models"
 )
 
 const (
 	DbName           = "aura_pins"
 	CollName         = "pins"
 	CollNameBoardPin = "board_pins"
+	CollNameBoard    = "boards"
 )
 
 type store struct {
@@ -26,6 +29,19 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) GetBoardByUserId(ctx context.Context, id primitive.ObjectID) (primitive.ObjectID, error) {
+	collection := s.db.Database(DbName).Collection(CollNameBoard)
+
+	var data Board_Model.BoardModel
+
+	if err := collection.FindOne(ctx, bson.M{"user_id": id, "type": "all_pins"}).Decode(&data); err != nil {
+		return primitive.NilObjectID, utils.ErrFailedToFindEntity
+	}
+
+	return data.ID, nil
+
 }
 
 func (s *store) DeleteBoardPin(ctx context.Context, filter *models.BoardPinFilter) error {
