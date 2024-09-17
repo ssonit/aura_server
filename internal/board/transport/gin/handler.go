@@ -29,12 +29,133 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/:id", h.GetBoardItem())
 	group.POST("/create", h.CreateBoard())
 	group.GET("/", h.ListBoardItem())
+	group.DELETE("/:id/soft-delete", h.SoftDeleteBoard())
+	group.POST("/:id/restore", h.RestoreBoard())
 	group.PUT("/:id", h.UpdateBoardItem())
+	group.GET("/deleted", h.ListDeletedBoards())
 
+}
+
+func (h *handler) ListDeletedBoards() func(*gin.Context) {
+	return func(c *gin.Context) {
+		var data []models.BoardModel
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		data, err := h.service.ListDeletedBoards(c.Request.Context(), userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
+
+}
+
+func (h *handler) RestoreBoard() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		if id == "" {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrBoardIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.RestoreBoard(c.Request.Context(), id)
+
+		if err != nil {
+
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Board soft deleted successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
+}
+
+func (h *handler) SoftDeleteBoard() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		if id == "" {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrBoardIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.SoftDeleteBoard(c.Request.Context(), id)
+
+		if err != nil {
+
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Board soft deleted successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
 }
 
 func (h *handler) UpdateBoardItem() func(*gin.Context) {
 	return func(c *gin.Context) {
+		var board models.BoardUpdate
+
+		if err := c.ShouldBindJSON(&board); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		id := c.Param("id")
+
+		if id == "" {
+
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrBoardIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.UpdateBoardItem(c.Request.Context(), id, &board)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Board updated successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
 	}
 }
 

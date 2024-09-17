@@ -17,6 +17,47 @@ func NewLoggingMiddleware(next BoardService) BoardService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) ListDeletedBoards(ctx context.Context, userId string) ([]models.BoardModel, error) {
+
+	start := time.Now()
+	defer func() {
+		zap.L().Info("List deleted boards", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListDeletedBoards(ctx, userId)
+}
+
+func (s *LoggingMiddleware) RestoreBoard(ctx context.Context, id string) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Restore board", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.RestoreBoard(ctx, id)
+}
+
+func (s *LoggingMiddleware) SoftDeleteBoard(ctx context.Context, id string) error {
+
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Soft delete board", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.SoftDeleteBoard(ctx, id)
+}
+
+func (s *LoggingMiddleware) UpdateBoardItem(ctx context.Context, id string, p *models.BoardUpdate) error {
+
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Update board", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.UpdateBoardItem(ctx, id, p)
+}
+
 func (s *LoggingMiddleware) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*models.BoardModel, error) {
 
 	start := time.Now()

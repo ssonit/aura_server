@@ -17,6 +17,7 @@ type Board struct {
 	Type      string             `json:"type" bson:"type"` // "all_pins" hoặc "custom"
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+	DeletedAt *time.Time         `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"` // Thêm DeletedAt để soft delete
 }
 
 func (m *Board) MarshalBSON() ([]byte, error) {
@@ -54,4 +55,10 @@ type BoardModel struct {
 	User      User_Model.User    `json:"user,omitempty" bson:"user,omitempty"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+	DeletedAt *time.Time         `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
+}
+
+type BoardUpdate struct {
+	Name      string `json:"name,omitempty" bson:"name,omitempty"`
+	IsPrivate bool   `json:"isPrivate,omitempty" bson:"isPrivate,omitempty"`
 }

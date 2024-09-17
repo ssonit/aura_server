@@ -16,6 +16,47 @@ func NewService(store utils.BoardStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) ListDeletedBoards(ctx context.Context, userId string) ([]models.BoardModel, error) {
+	OId, err := primitive.ObjectIDFromHex(userId)
+
+	if err != nil {
+		return nil, utils.ErrFailedToDecodeObjID
+	}
+
+	return s.store.ListDeletedBoards(ctx, OId)
+}
+
+func (s *service) RestoreBoard(ctx context.Context, id string) error {
+	boardId, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	return s.store.RestoreBoard(ctx, boardId)
+}
+
+func (s *service) SoftDeleteBoard(ctx context.Context, id string) error {
+	boardId, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	return s.store.SoftDeleteBoard(ctx, boardId)
+}
+
+func (s *service) UpdateBoardItem(ctx context.Context, id string, p *models.BoardUpdate) error {
+	boardId, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	return s.store.UpdateBoardItem(ctx, boardId, p)
+
+}
+
 func (s *service) GetBoardItem(ctx context.Context, id primitive.ObjectID) (*models.BoardModel, error) {
 	data, err := s.store.GetBoardItem(ctx, id)
 	if err != nil {
