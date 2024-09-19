@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ssonit/aura_server/internal/board/models"
@@ -44,7 +45,9 @@ func (s *store) ListDeletedBoards(ctx context.Context, userId primitive.ObjectID
 	defer cursor.Close(ctx)
 
 	var boards []models.BoardModel
+
 	if err = cursor.All(ctx, &boards); err != nil {
+		fmt.Println(err)
 		return nil, utils.ErrFailedToDecode
 	}
 

@@ -139,3 +139,9 @@ type BoardPinFilter struct {
 type BoardPinUpdate struct {
 	BoardId primitive.ObjectID `json:"board_id" bson:"board_id"`
 }
+
+type BoardPinSave struct {
+	BoardId string `json:"board_id" bson:"board_id"`
+	PinId   string `json:"pin_id" bson:"pin_id"`
+	UserId  string `json:"user_id" bson:"user_id"`
+}

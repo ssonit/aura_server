@@ -27,11 +27,46 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
-	group.GET("/:id", h.GetPinById())
-	group.PUT("/:id", h.UpdatePin())
 	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
 	group.GET("/board-pin/detail/:pinId", h.GetBoardPinItem())
+	group.POST("/board-pin/save", h.SaveBoardPin())
+	group.GET("/:id", h.GetPinById())
+	group.PUT("/:id", h.UpdatePin())
 
+}
+
+func (h *handler) SaveBoardPin() func(*gin.Context) {
+	return func(c *gin.Context) {
+		var boardPin models.BoardPinSave
+
+		if err := c.ShouldBindJSON(&boardPin); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		userID, exists := c.Get("userID")
+
+		boardPin.UserId, _ = userID.(string)
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		id, err := h.service.SaveBoardPin(c.Request.Context(), &boardPin)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(id))
+
+	}
 }
 
 func (h *handler) GetBoardPinItem() func(*gin.Context) {

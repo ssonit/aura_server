@@ -15,6 +15,7 @@ type PinService interface {
 	ListBoardPinItem(context.Context, *models.BoardPinFilter, *common.Paging) ([]models.BoardPinModel, error)
 	GetBoardPinItem(context.Context, *models.BoardPinFilter) (*models.BoardPinModel, error)
 	UpdatePin(ctx context.Context, id string, pin *models.PinUpdate, userId string) error
+	SaveBoardPin(context.Context, *models.BoardPinSave) (primitive.ObjectID, error)
 }
 
 type PinStore interface {
@@ -26,6 +27,8 @@ type PinStore interface {
 	ListBoardPinItem(context.Context, *models.BoardPinFilter, *common.Paging) ([]models.BoardPinModel, error)
 	GetBoardPinItem(context.Context, *models.BoardPinFilter) (*models.BoardPinModel, error)
 	DeleteBoardPin(context.Context, *models.BoardPinFilter) error
-	GetBoardByUserId(context.Context, primitive.ObjectID) (primitive.ObjectID, error)
+	GetBoardByUserId(context.Context, primitive.ObjectID, string) (primitive.ObjectID, error)
 	DeleteBoardPinById(context.Context, primitive.ObjectID) error
+	IsPinOwnedByUser(ctx context.Context, userId, pinId primitive.ObjectID) (bool, error)
+	CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error)
 }

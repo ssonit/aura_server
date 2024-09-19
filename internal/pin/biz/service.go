@@ -9,12 +9,80 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	AllPins = "all_pins"
+)
+
 type service struct {
 	store utils.PinStore
 }
 
 func NewService(store utils.PinStore) *service {
 	return &service{store: store}
+}
+
+func (s *service) SaveBoardPin(ctx context.Context, p *models.BoardPinSave) (primitive.ObjectID, error) {
+	userOId, _ := primitive.ObjectIDFromHex(p.UserId)
+	pinOId, _ := primitive.ObjectIDFromHex(p.PinId)
+	selectedBoardOId, _ := primitive.ObjectIDFromHex(p.BoardId)
+
+	boardId, err := s.store.GetBoardByUserId(ctx, userOId, AllPins)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if boardId.IsZero() {
+		return primitive.NilObjectID, utils.ErrBoardNotFound
+	}
+
+	boardPinId, err := s.store.GetBoardPinItem(ctx, &models.BoardPinFilter{
+		PinId:  pinOId,
+		UserId: userOId,
+	})
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	pinInBoard, err := s.store.CheckIfPinExistsInBoard(ctx, boardId, pinOId)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if !pinInBoard {
+		// Create board pin for all pins
+		_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
+			BoardId: boardId,
+			PinId:   pinOId,
+			UserId:  userOId,
+		})
+
+		if err != nil {
+			return primitive.NilObjectID, err
+		}
+	}
+
+	if boardPinId != nil {
+		err = s.store.DeleteBoardPinById(ctx, boardPinId.ID)
+
+		if err != nil {
+			return primitive.NilObjectID, err
+		}
+	}
+
+	// Create board pin for the pin
+	_, err = s.store.CreateBoardPin(ctx, &models.BoardPinCreation{
+		BoardId: selectedBoardOId,
+		PinId:   pinOId,
+		UserId:  userOId,
+	})
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return primitive.NilObjectID, nil
 }
 
 func (s *service) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilter) (*models.BoardPinModel, error) {
@@ -54,12 +122,7 @@ func (s *service) UpdatePin(ctx context.Context, id string, pin *models.PinUpdat
 		return err
 	}
 
-	// var filter models.BoardPinFilter
-
 	userOId, _ := primitive.ObjectIDFromHex(userId)
-
-	// filter.PinId = oID
-	// filter.UserId = userOId
 
 	err = s.store.DeleteBoardPinById(ctx, pin.BoardPinId)
 
@@ -81,7 +144,7 @@ func (s *service) UpdatePin(ctx context.Context, id string, pin *models.PinUpdat
 }
 
 func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
-	boardId, err := s.store.GetBoardByUserId(ctx, p.UserId)
+	boardId, err := s.store.GetBoardByUserId(ctx, p.UserId, AllPins)
 
 	if err != nil {
 		return primitive.NilObjectID, err

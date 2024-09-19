@@ -18,6 +18,16 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) SaveBoardPin(ctx context.Context, p *models.BoardPinSave) (primitive.ObjectID, error) {
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Create board pin", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.SaveBoardPin(ctx, p)
+}
+
 func (s *LoggingMiddleware) GetBoardPinItem(ctx context.Context, filter *models.BoardPinFilter) (*models.BoardPinModel, error) {
 	start := time.Now()
 

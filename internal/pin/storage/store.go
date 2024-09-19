@@ -31,12 +31,43 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
-func (s *store) GetBoardByUserId(ctx context.Context, id primitive.ObjectID) (primitive.ObjectID, error) {
+func (s *store) CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error) {
+	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
+	filter := bson.M{
+		"board_id": boardId,
+		"pin_id":   pinId,
+	}
+
+	count, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (s *store) IsPinOwnedByUser(ctx context.Context, userId, pinId primitive.ObjectID) (bool, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	filter := bson.M{
+		"user_id": userId,
+		"_id":     pinId,
+	}
+
+	count, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (s *store) GetBoardByUserId(ctx context.Context, id primitive.ObjectID, board_type string) (primitive.ObjectID, error) {
 	collection := s.db.Database(DbName).Collection(CollNameBoard)
 
 	var data Board_Model.BoardModel
 
-	if err := collection.FindOne(ctx, bson.M{"user_id": id, "type": "all_pins"}).Decode(&data); err != nil {
+	if err := collection.FindOne(ctx, bson.M{"user_id": id, "type": board_type}).Decode(&data); err != nil {
 		return primitive.NilObjectID, utils.ErrFailedToFindEntity
 	}
 
