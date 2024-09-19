@@ -21,6 +21,43 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) UnLikePin(ctx context.Context, p *models.LikeDelete) error {
+
+	userOId, err := primitive.ObjectIDFromHex(p.UserId)
+	pinOId, err := primitive.ObjectIDFromHex(p.PinId)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	err = s.store.UnlikePin(ctx, userOId, pinOId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *service) LikePin(ctx context.Context, p *models.LikeCreation) error {
+
+	userOId, err := primitive.ObjectIDFromHex(p.UserId)
+	pinOId, err := primitive.ObjectIDFromHex(p.PinId)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	err = s.store.LikePin(ctx, userOId, pinOId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *service) SaveBoardPin(ctx context.Context, p *models.BoardPinSave) (primitive.ObjectID, error) {
 	userOId, _ := primitive.ObjectIDFromHex(p.UserId)
 	pinOId, _ := primitive.ObjectIDFromHex(p.PinId)
@@ -202,11 +239,16 @@ func (s *service) ListPinItem(ctx context.Context, filter *models.Filter, paging
 
 }
 
-func (s *service) GetPinById(ctx context.Context, id string) (*models.PinModel, error) {
+func (s *service) GetPinById(ctx context.Context, id, userId string) (*models.PinModel, error) {
 
-	oID, _ := primitive.ObjectIDFromHex(id)
+	oID, err := primitive.ObjectIDFromHex(id)
+	userOID, err := primitive.ObjectIDFromHex(userId)
 
-	data, err := s.store.GetItem(ctx, map[string]interface{}{"_id": oID})
+	if err != nil {
+		return nil, utils.ErrFailedToDecodeObjID
+	}
+
+	data, err := s.store.GetItem(ctx, map[string]interface{}{"_id": oID, "user_id": userOID})
 
 	if err != nil {
 		return nil, err

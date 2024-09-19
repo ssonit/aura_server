@@ -30,9 +30,85 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
 	group.GET("/board-pin/detail/:pinId", h.GetBoardPinItem())
 	group.POST("/board-pin/save", h.SaveBoardPin())
+	group.POST("/:id/like", h.LikePin())
+	group.DELETE("/:id/unlike", h.UnlikePin())
 	group.GET("/:id", h.GetPinById())
 	group.PUT("/:id", h.UpdatePin())
 
+}
+
+func (h *handler) UnlikePin() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		pin_id := c.Param("id")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		var like models.LikeDelete
+
+		like.PinId = pin_id
+		like.UserId = userID.(string)
+
+		err := h.service.UnLikePin(c.Request.Context(), &like)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin unliked successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
+}
+
+func (h *handler) LikePin() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		pin_id := c.Param("id")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		var like models.LikeCreation
+
+		like.PinId = pin_id
+		like.UserId = userID.(string)
+
+		err := h.service.LikePin(c.Request.Context(), &like)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin liked successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
 }
 
 func (h *handler) SaveBoardPin() func(*gin.Context) {
@@ -192,7 +268,14 @@ func (h *handler) GetPinById() func(*gin.Context) {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		data, err := h.service.GetPinById(c.Request.Context(), id)
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		data, err := h.service.GetPinById(c.Request.Context(), id, userID.(string))
 
 		if err != nil {
 			if customErr, ok := err.(*common.CustomError); ok {

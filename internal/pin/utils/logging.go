@@ -18,6 +18,26 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) LikePin(ctx context.Context, like *models.LikeCreation) error {
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Like pin", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.LikePin(ctx, like)
+}
+
+func (s *LoggingMiddleware) UnLikePin(ctx context.Context, like *models.LikeDelete) error {
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Unlike pin", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.UnLikePin(ctx, like)
+}
+
 func (s *LoggingMiddleware) SaveBoardPin(ctx context.Context, p *models.BoardPinSave) (primitive.ObjectID, error) {
 	start := time.Now()
 
@@ -78,13 +98,13 @@ func (s *LoggingMiddleware) ListPinItem(ctx context.Context, filter *models.Filt
 
 }
 
-func (s *LoggingMiddleware) GetPinById(ctx context.Context, id string) (*models.PinModel, error) {
+func (s *LoggingMiddleware) GetPinById(ctx context.Context, id, userId string) (*models.PinModel, error) {
 
 	start := time.Now()
 	defer func() {
 		zap.L().Info("Get pin by id", zap.Duration("took", time.Since(start)))
 	}()
 
-	return s.next.GetPinById(ctx, id)
+	return s.next.GetPinById(ctx, id, userId)
 
 }

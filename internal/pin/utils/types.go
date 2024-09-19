@@ -11,11 +11,13 @@ import (
 type PinService interface {
 	CreatePin(context.Context, *models.PinCreation) (primitive.ObjectID, error)
 	ListPinItem(ctx context.Context, filter *models.Filter, paging *common.Paging) ([]models.PinModel, error)
-	GetPinById(ctx context.Context, id string) (*models.PinModel, error)
+	GetPinById(ctx context.Context, id, userId string) (*models.PinModel, error)
 	ListBoardPinItem(context.Context, *models.BoardPinFilter, *common.Paging) ([]models.BoardPinModel, error)
 	GetBoardPinItem(context.Context, *models.BoardPinFilter) (*models.BoardPinModel, error)
 	UpdatePin(ctx context.Context, id string, pin *models.PinUpdate, userId string) error
 	SaveBoardPin(context.Context, *models.BoardPinSave) (primitive.ObjectID, error)
+	LikePin(context.Context, *models.LikeCreation) error
+	UnLikePin(context.Context, *models.LikeDelete) error
 }
 
 type PinStore interface {
@@ -31,4 +33,6 @@ type PinStore interface {
 	DeleteBoardPinById(context.Context, primitive.ObjectID) error
 	IsPinOwnedByUser(ctx context.Context, userId, pinId primitive.ObjectID) (bool, error)
 	CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error)
+	LikePin(ctx context.Context, userID, pinID primitive.ObjectID) error
+	UnlikePin(ctx context.Context, userID, pinID primitive.ObjectID) error
 }

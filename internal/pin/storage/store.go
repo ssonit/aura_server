@@ -19,6 +19,7 @@ const (
 	CollName         = "pins"
 	CollNameBoardPin = "board_pins"
 	CollNameBoard    = "boards"
+	CollNameLikes    = "likes"
 )
 
 type store struct {
@@ -29,6 +30,45 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) UnlikePin(ctx context.Context, userID, pinID primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollNameLikes)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"user_id": userID, "pin_id": pinID})
+
+	if err != nil {
+		return utils.ErrCannotUnlikePin
+	}
+
+	return nil
+}
+
+func (s *store) LikePin(ctx context.Context, userID, pinID primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollNameLikes)
+
+	count, err := collection.CountDocuments(ctx, bson.M{"user_id": userID, "pin_id": pinID})
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return utils.ErrAlreadyLiked
+	}
+
+	like := &models.Like{
+		UserId: userID,
+		PinId:  pinID,
+	}
+
+	_, err = collection.InsertOne(ctx, like)
+
+	if err != nil {
+		return utils.ErrCannotLikePin
+	}
+
+	return nil
+
 }
 
 func (s *store) CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error) {
@@ -343,7 +383,7 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 	collection := s.db.Database(DbName).Collection(CollName)
 
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: filter}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: filter["_id"]}}}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{
@@ -397,6 +437,41 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 					{Key: "preserveNullAndEmptyArrays", Value: true},
 				},
 			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "likes"},
+					{Key: "let", Value: bson.D{
+						{Key: "pin_id", Value: "$_id"},
+					}},
+					{Key: "pipeline", Value: mongo.Pipeline{
+						// Match likes for the current user and pin
+						bson.D{
+							{Key: "$match", Value: bson.D{
+								{Key: "$expr", Value: bson.D{
+									{Key: "$and", Value: bson.A{
+										bson.D{{Key: "$eq", Value: bson.A{"$user_id", filter["user_id"]}}},
+										bson.D{{Key: "$eq", Value: bson.A{"$pin_id", "$$pin_id"}}},
+									}},
+								}},
+							}},
+						},
+					}},
+					{Key: "as", Value: "likes"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$addFields", Value: bson.D{
+				{Key: "isLiked", Value: bson.D{
+					{Key: "$cond", Value: bson.A{
+						bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$likes"}}, 0}}},
+						true,
+						false,
+					}},
+				}},
+			}},
 		},
 		bson.D{
 			{Key: "$project",

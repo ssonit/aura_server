@@ -47,6 +47,7 @@ type PinModel struct {
 	LinkUrl     string               `json:"link_url" bson:"link_url"`
 	User        User_Model.UserModel `json:"user,omitempty" bson:"user,omitempty"`
 	Media       Media_Model.Media    `json:"media,omitempty" bson:"media,omitempty"`
+	IsLiked     bool                 `json:"isLiked" bson:"isLiked"`
 	CreatedAt   time.Time            `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time            `json:"updated_at" bson:"updated_at"`
 }

@@ -21,4 +21,8 @@ var (
 	ErrCannotDeleteBoardPin  = common.NewFullCustomError(500, "Cannot delete board pin", "CANNOT_DELETE_BOARD_PIN")
 	ErrBoardNotFound         = common.NewFullCustomError(404, "Board not found", "BOARD_NOT_FOUND")
 	ErrBoardPinAlreadyExists = common.NewFullCustomError(400, "Board pin already exists", "BOARD_PIN_ALREADY_EXISTS")
+	ErrFailedToDecodeObjID   = common.NewFullCustomError(500, "Failed to decode object id", "FAILED_TO_DECODE_OBJ_ID")
+	ErrCannotLikePin         = common.NewFullCustomError(500, "Cannot like pin", "CANNOT_LIKE_PIN")
+	ErrCannotUnlikePin       = common.NewFullCustomError(500, "Cannot unlike pin", "CANNOT_UNLIKE_PIN")
+	ErrAlreadyLiked          = common.NewFullCustomError(400, "Already liked", "ALREADY_LIKED")
 )
