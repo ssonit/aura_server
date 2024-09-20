@@ -25,4 +25,7 @@ var (
 	ErrCannotLikePin         = common.NewFullCustomError(500, "Cannot like pin", "CANNOT_LIKE_PIN")
 	ErrCannotUnlikePin       = common.NewFullCustomError(500, "Cannot unlike pin", "CANNOT_UNLIKE_PIN")
 	ErrAlreadyLiked          = common.NewFullCustomError(400, "Already liked", "ALREADY_LIKED")
+	ErrCannotCreateComment   = common.NewFullCustomError(500, "Cannot create comment", "CANNOT_CREATE_COMMENT")
+	ErrCannotDeleteComment   = common.NewFullCustomError(500, "Cannot delete comment", "CANNOT_DELETE_COMMENT")
+	ErrCommentNotExists      = common.NewFullCustomError(404, "Comment not exists", "COMMENT_NOT_EXISTS")
 )

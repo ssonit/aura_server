@@ -18,6 +18,9 @@ type PinService interface {
 	SaveBoardPin(context.Context, *models.BoardPinSave) (primitive.ObjectID, error)
 	LikePin(context.Context, *models.LikeCreation) error
 	UnLikePin(context.Context, *models.LikeDelete) error
+	CreateComment(context.Context, *models.CommentCreation) (primitive.ObjectID, error)
+	ListCommentsByPinId(context.Context, string, *common.Paging) ([]models.CommentModel, error)
+	DeleteComment(context.Context, string, string) error
 }
 
 type PinStore interface {
@@ -35,4 +38,8 @@ type PinStore interface {
 	CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error)
 	LikePin(ctx context.Context, userID, pinID primitive.ObjectID) error
 	UnlikePin(ctx context.Context, userID, pinID primitive.ObjectID) error
+	CreateComment(context.Context, *models.CommentCreationStore) (primitive.ObjectID, error)
+	ListCommentsByPinId(context.Context, primitive.ObjectID, *common.Paging) ([]models.CommentModel, error)
+	DeleteComment(context.Context, primitive.ObjectID) error
+	GetCommentById(context.Context, primitive.ObjectID) (*models.CommentModel, error)
 }

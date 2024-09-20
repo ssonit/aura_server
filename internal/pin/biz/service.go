@@ -21,6 +21,73 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) DeleteComment(ctx context.Context, commentId, userId string) error {
+	commentOID, err := primitive.ObjectIDFromHex(commentId)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	comment, err := s.store.GetCommentById(ctx, commentOID)
+
+	if err != nil {
+		return err
+	}
+
+	if comment.UserId.Hex() != userId {
+		return utils.ErrUserNotPermitted
+	}
+
+	err = s.store.DeleteComment(ctx, commentOID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *service) ListCommentsByPinId(ctx context.Context, pinId string, paging *common.Paging) ([]models.CommentModel, error) {
+	oID, err := primitive.ObjectIDFromHex(pinId)
+
+	if err != nil {
+		return nil, utils.ErrFailedToDecodeObjID
+	}
+
+	data, err := s.store.ListCommentsByPinId(ctx, oID, paging)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+
+}
+
+func (s *service) CreateComment(ctx context.Context, p *models.CommentCreation) (primitive.ObjectID, error) {
+
+	userOId, err := primitive.ObjectIDFromHex(p.UserId)
+	pinOId, err := primitive.ObjectIDFromHex(p.PinId)
+
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrFailedToDecodeObjID
+	}
+
+	data, err := s.store.CreateComment(ctx, &models.CommentCreationStore{
+		PinId:   pinOId,
+		UserId:  userOId,
+		Content: p.Content,
+	})
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return data, nil
+
+}
+
 func (s *service) UnLikePin(ctx context.Context, p *models.LikeDelete) error {
 
 	userOId, err := primitive.ObjectIDFromHex(p.UserId)

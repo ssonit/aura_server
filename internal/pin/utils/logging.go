@@ -18,6 +18,37 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) DeleteComment(ctx context.Context, commentId, userId string) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Delete comment", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.DeleteComment(ctx, commentId, userId)
+}
+
+func (s *LoggingMiddleware) ListCommentsByPinId(ctx context.Context, pinId string, paging *common.Paging) ([]models.CommentModel, error) {
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("List comments by pin id", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListCommentsByPinId(ctx, pinId, paging)
+}
+
+func (s *LoggingMiddleware) CreateComment(ctx context.Context, comment *models.CommentCreation) (primitive.ObjectID, error) {
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Create comment", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.CreateComment(ctx, comment)
+}
+
 func (s *LoggingMiddleware) LikePin(ctx context.Context, like *models.LikeCreation) error {
 	start := time.Now()
 

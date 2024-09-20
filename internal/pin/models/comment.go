@@ -43,6 +43,12 @@ type CommentModel struct {
 }
 
 type CommentCreation struct {
+	PinId   string `json:"pin_id" bson:"pin_id"`
+	UserId  string `json:"user_id" bson:"user_id"`
+	Content string `json:"content" bson:"content"`
+}
+
+type CommentCreationStore struct {
 	PinId   primitive.ObjectID `json:"pin_id" bson:"pin_id"`
 	UserId  primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Content string             `json:"content" bson:"content"`

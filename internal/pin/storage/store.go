@@ -20,6 +20,7 @@ const (
 	CollNameBoardPin = "board_pins"
 	CollNameBoard    = "boards"
 	CollNameLikes    = "likes"
+	CollNameComments = "comments"
 )
 
 type store struct {
@@ -30,6 +31,133 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) GetCommentById(ctx context.Context, id primitive.ObjectID) (*models.CommentModel, error) {
+	collection := s.db.Database(DbName).Collection(CollNameComments)
+
+	var data *models.CommentModel
+
+	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&data)
+
+	if err != nil {
+		return nil, utils.ErrCommentNotExists
+	}
+
+	return data, nil
+}
+
+func (s *store) DeleteComment(ctx context.Context, id primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollNameComments)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": id})
+
+	if err != nil {
+		return utils.ErrCannotDeleteComment
+	}
+
+	return nil
+}
+
+func (s *store) ListCommentsByPinId(ctx context.Context, pinId primitive.ObjectID, paging *common.Paging) ([]models.CommentModel, error) {
+	collection := s.db.Database(DbName).Collection(CollNameComments)
+
+	total, err := collection.CountDocuments(ctx, bson.D{{Key: "pin_id", Value: pinId}})
+
+	if err != nil {
+		return nil, utils.ErrFailedToCount
+	}
+
+	paging.Total = total
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "pin_id", Value: pinId}}}},
+		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
+		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}}, // Sắp xếp theo ngày tạo mới nhất
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "users"},
+					{Key: "localField", Value: "user_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "user"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$user"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "user.avatar_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "user.avatar"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$user.avatar"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$project",
+				Value: bson.D{
+					{Key: "user.password", Value: 0}, // Loại bỏ trường password của user
+				},
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	defer cursor.Close(ctx)
+
+	var items []models.CommentModel
+
+	if err = cursor.All(ctx, &items); err != nil {
+		return nil, utils.ErrFailedToDecode
+
+	}
+
+	return items, nil
+
+}
+
+func (s *store) CreateComment(ctx context.Context, p *models.CommentCreationStore) (primitive.ObjectID, error) {
+	collection := s.db.Database(DbName).Collection(CollNameComments)
+
+	data := &models.Comment{
+		PinId:   p.PinId,
+		UserId:  p.UserId,
+		Content: p.Content,
+	}
+
+	newData, err := collection.InsertOne(ctx, data)
+
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrCannotCreateComment
+	}
+
+	id := newData.InsertedID.(primitive.ObjectID)
+
+	return id, nil
+
 }
 
 func (s *store) UnlikePin(ctx context.Context, userID, pinID primitive.ObjectID) error {

@@ -32,9 +32,114 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/board-pin/save", h.SaveBoardPin())
 	group.POST("/:id/like", h.LikePin())
 	group.DELETE("/:id/unlike", h.UnlikePin())
+	group.POST("/:id/comment", h.CreateComment())
+	group.DELETE("/comment/:commentId", h.DeleteComment())
+	group.GET("/:id/list/comments", h.ListComments())
 	group.GET("/:id", h.GetPinById())
 	group.PUT("/:id", h.UpdatePin())
 
+}
+
+func (h *handler) DeleteComment() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		commentId := c.Param("commentId")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.DeleteComment(c.Request.Context(), commentId, userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Comment deleted successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
+}
+
+func (h *handler) ListComments() func(*gin.Context) {
+	return func(c *gin.Context) {
+		pin_id := c.Param("id")
+
+		var data []models.CommentModel
+		var paging common.Paging
+
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		paging.Process()
+
+		data, err := h.service.ListCommentsByPinId(c.Request.Context(), pin_id, &paging)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, nil, nil))
+	}
+}
+
+func (h *handler) CreateComment() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		pin_id := c.Param("id")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		var comment models.CommentCreation
+
+		if err := c.ShouldBindJSON(&comment); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		comment.PinId = pin_id
+		comment.UserId = userID.(string)
+
+		id, err := h.service.CreateComment(c.Request.Context(), &comment)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"id": id,
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
 }
 
 func (h *handler) UnlikePin() func(*gin.Context) {
