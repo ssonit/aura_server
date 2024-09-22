@@ -146,3 +146,9 @@ type BoardPinSave struct {
 	PinId   string `json:"pin_id" bson:"pin_id"`
 	UserId  string `json:"user_id" bson:"user_id"`
 }
+
+type BoardPinUnSave struct {
+	BoardPinId string `json:"board_pin_id" bson:"board_pin_id"`
+	PinId      string `json:"pin_id" bson:"pin_id"`
+	UserId     string `json:"user_id" bson:"user_id"`
+}

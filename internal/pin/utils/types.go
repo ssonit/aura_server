@@ -21,6 +21,7 @@ type PinService interface {
 	CreateComment(context.Context, *models.CommentCreation) (primitive.ObjectID, error)
 	ListCommentsByPinId(context.Context, string, *common.Paging) ([]models.CommentModel, error)
 	DeleteComment(context.Context, string, string) error
+	UnSaveBoardPin(context.Context, *models.BoardPinUnSave) error
 }
 
 type PinStore interface {

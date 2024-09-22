@@ -21,6 +21,48 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) UnSaveBoardPin(ctx context.Context, p *models.BoardPinUnSave) error {
+	pinOId, err := primitive.ObjectIDFromHex(p.PinId)
+	userOId, err := primitive.ObjectIDFromHex(p.UserId)
+	boardPinId, err := primitive.ObjectIDFromHex(p.BoardPinId)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	// Board of all pins by user id
+	boardIdAllPins, err := s.store.GetBoardByUserId(ctx, userOId, AllPins)
+
+	if err != nil {
+		return err
+	}
+
+	if boardIdAllPins.IsZero() {
+		return utils.ErrBoardNotFound
+	}
+
+	// delete board pin for all pins
+	err = s.store.DeleteBoardPin(ctx, &models.BoardPinFilter{
+		PinId:   pinOId,
+		BoardId: boardIdAllPins,
+		UserId:  userOId,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// delete board pin for the pin
+	err = s.store.DeleteBoardPinById(ctx, boardPinId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (s *service) DeleteComment(ctx context.Context, commentId, userId string) error {
 	commentOID, err := primitive.ObjectIDFromHex(commentId)
 

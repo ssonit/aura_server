@@ -30,6 +30,7 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
 	group.GET("/board-pin/detail/:pinId", h.GetBoardPinItem())
 	group.POST("/board-pin/save", h.SaveBoardPin())
+	group.DELETE("/board-pin/:boardPinId/unsave/:pinId", h.UnSaveBoardPin())
 	group.POST("/:id/like", h.LikePin())
 	group.DELETE("/:id/unlike", h.UnlikePin())
 	group.POST("/:id/comment", h.CreateComment())
@@ -38,6 +39,44 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/:id", h.GetPinById())
 	group.PUT("/:id", h.UpdatePin())
 
+}
+
+func (h *handler) UnSaveBoardPin() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		boardPinId := c.Param("boardPinId")
+
+		pinId := c.Param("pinId")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.UnSaveBoardPin(c.Request.Context(), &models.BoardPinUnSave{
+			PinId:      pinId,
+			UserId:     userID.(string),
+			BoardPinId: boardPinId,
+		})
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin deleted from board successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
 }
 
 func (h *handler) DeleteComment() func(*gin.Context) {

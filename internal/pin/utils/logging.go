@@ -18,6 +18,17 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) UnSaveBoardPin(ctx context.Context, p *models.BoardPinUnSave) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Delete board pin item", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.UnSaveBoardPin(ctx, p)
+}
+
 func (s *LoggingMiddleware) DeleteComment(ctx context.Context, commentId, userId string) error {
 
 	start := time.Now()

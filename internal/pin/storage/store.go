@@ -201,6 +201,7 @@ func (s *store) LikePin(ctx context.Context, userID, pinID primitive.ObjectID) e
 
 func (s *store) CheckIfPinExistsInBoard(ctx context.Context, boardId primitive.ObjectID, pinId primitive.ObjectID) (bool, error) {
 	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
+
 	filter := bson.M{
 		"board_id": boardId,
 		"pin_id":   pinId,
@@ -246,20 +247,28 @@ func (s *store) GetBoardByUserId(ctx context.Context, id primitive.ObjectID, boa
 func (s *store) DeleteBoardPin(ctx context.Context, filter *models.BoardPinFilter) error {
 	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
 
-	fmt.Println(filter.BoardId, filter.PinId, "filter")
-	_, err := collection.DeleteOne(ctx, bson.M{"pin_id": filter.PinId, "user_id": filter.UserId})
+	filterMap := bson.M{
+		"pin_id":  filter.PinId,
+		"user_id": filter.UserId,
+	}
+
+	if !filter.BoardId.IsZero() {
+		filterMap["board_id"] = filter.BoardId
+	}
+
+	_, err := collection.DeleteOne(ctx, filterMap)
 
 	if err != nil {
 		return utils.ErrCannotDeleteBoardPin
 	}
+
+	fmt.Println(filterMap)
 
 	return nil
 }
 
 func (s *store) DeleteBoardPinById(ctx context.Context, id primitive.ObjectID) error {
 	collection := s.db.Database(DbName).Collection(CollNameBoardPin)
-
-	// oID, _ := primitive.ObjectIDFromHex(id)
 
 	_, err := collection.DeleteOne(ctx, bson.M{"_id": id})
 
@@ -429,6 +438,7 @@ func (s *store) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFil
 				},
 			},
 		},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}},
 		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
 		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
 	}
