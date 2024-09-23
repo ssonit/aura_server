@@ -18,6 +18,40 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) ListSoftDeletedPins(ctx context.Context, userId string) ([]models.PinModel, error) {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("List soft deleted pins", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListSoftDeletedPins(ctx, userId)
+}
+
+func (s *LoggingMiddleware) RestorePin(ctx context.Context, id, userId string) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Restore pin", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.RestorePin(ctx, id, userId)
+
+}
+
+func (s *LoggingMiddleware) SoftDeletePin(ctx context.Context, id, userId string) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Soft delete pin", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.SoftDeletePin(ctx, id, userId)
+}
+
 func (s *LoggingMiddleware) UnSaveBoardPin(ctx context.Context, p *models.BoardPinUnSave) error {
 
 	start := time.Now()

@@ -22,6 +22,9 @@ type PinService interface {
 	ListCommentsByPinId(context.Context, string, *common.Paging) ([]models.CommentModel, error)
 	DeleteComment(context.Context, string, string) error
 	UnSaveBoardPin(context.Context, *models.BoardPinUnSave) error
+	SoftDeletePin(ctx context.Context, id, userId string) error
+	RestorePin(ctx context.Context, id, userId string) error
+	ListSoftDeletedPins(context.Context, string) ([]models.PinModel, error)
 }
 
 type PinStore interface {
@@ -43,4 +46,7 @@ type PinStore interface {
 	ListCommentsByPinId(context.Context, primitive.ObjectID, *common.Paging) ([]models.CommentModel, error)
 	DeleteComment(context.Context, primitive.ObjectID) error
 	GetCommentById(context.Context, primitive.ObjectID) (*models.CommentModel, error)
+	SoftDeletePin(context.Context, primitive.ObjectID) error
+	RestorePin(context.Context, primitive.ObjectID) error
+	ListSoftDeletedPins(context.Context, primitive.ObjectID) ([]models.PinModel, error)
 }

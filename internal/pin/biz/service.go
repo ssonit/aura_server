@@ -21,6 +21,78 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) ListSoftDeletedPins(ctx context.Context, userId string) ([]models.PinModel, error) {
+	userOId, err := primitive.ObjectIDFromHex(userId)
+
+	if err != nil {
+		return nil, utils.ErrFailedToDecodeObjID
+	}
+
+	data, err := s.store.ListSoftDeletedPins(ctx, userOId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (s *service) RestorePin(ctx context.Context, id, userId string) error {
+	oID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+
+	}
+
+	data, err := s.store.GetItem(ctx, map[string]interface{}{"_id": oID})
+
+	if err != nil {
+		return err
+	}
+
+	if data.UserId.Hex() != userId {
+		return utils.ErrUserNotPermitted
+
+	}
+
+	err = s.store.RestorePin(ctx, oID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *service) SoftDeletePin(ctx context.Context, id, userId string) error {
+	oID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	data, err := s.store.GetItem(ctx, map[string]interface{}{"_id": oID})
+
+	if err != nil {
+		return err
+	}
+
+	if data.UserId.Hex() != userId {
+		return utils.ErrUserNotPermitted
+	}
+
+	err = s.store.SoftDeletePin(ctx, oID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (s *service) UnSaveBoardPin(ctx context.Context, p *models.BoardPinUnSave) error {
 	pinOId, err := primitive.ObjectIDFromHex(p.PinId)
 	userOId, err := primitive.ObjectIDFromHex(p.UserId)

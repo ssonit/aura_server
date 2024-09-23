@@ -22,6 +22,7 @@ type Pin struct {
 	LinkUrl     string             `json:"link_url" bson:"link_url"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
+	DeletedAt   *time.Time         `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
 }
 
 func (m *Pin) MarshalBSON() ([]byte, error) {
@@ -50,6 +51,7 @@ type PinModel struct {
 	IsLiked     bool                 `json:"isLiked" bson:"isLiked"`
 	CreatedAt   time.Time            `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time            `json:"updated_at" bson:"updated_at"`
+	DeletedAt   *time.Time           `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
 }
 
 type PinCreation struct {

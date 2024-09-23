@@ -28,4 +28,6 @@ var (
 	ErrCannotCreateComment   = common.NewFullCustomError(500, "Cannot create comment", "CANNOT_CREATE_COMMENT")
 	ErrCannotDeleteComment   = common.NewFullCustomError(500, "Cannot delete comment", "CANNOT_DELETE_COMMENT")
 	ErrCommentNotExists      = common.NewFullCustomError(404, "Comment not exists", "COMMENT_NOT_EXISTS")
+	ErrCannotSoftDelete      = common.NewFullCustomError(500, "Cannot soft delete", "CANNOT_SOFT_DELETE")
+	ErrFailedRestore         = common.NewFullCustomError(500, "Failed to restore", "FAILED_RESTORE")
 )

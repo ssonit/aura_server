@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
@@ -31,6 +32,89 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) ListSoftDeletedPins(ctx context.Context, userId primitive.ObjectID) ([]models.PinModel, error) {
+
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "user_id", Value: userId}, {Key: "deleted_at", Value: bson.D{{Key: "$ne", Value: nil}}}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "media_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "media"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$media"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "deleted_at", Value: -1}}}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	var items []models.PinModel
+
+	if err = cursor.All(ctx, &items); err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	return items, nil
+
+}
+
+func (s *store) RestorePin(ctx context.Context, id primitive.ObjectID) error {
+
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	update := bson.D{
+		{Key: "$unset", Value: bson.D{
+			{Key: "deleted_at", Value: ""},
+		}},
+	}
+
+	_, err := collection.UpdateByID(ctx, id, update)
+	if err != nil {
+		return utils.ErrFailedRestore
+	}
+
+	return nil
+}
+
+func (s *store) SoftDeletePin(ctx context.Context, id primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	now := time.Now()
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "deleted_at", Value: now},
+		}},
+	}
+
+	_, err := collection.UpdateByID(ctx, id, update)
+
+	if err != nil {
+		return utils.ErrCannotSoftDelete
+	}
+
+	return nil
+
 }
 
 func (s *store) GetCommentById(ctx context.Context, id primitive.ObjectID) (*models.CommentModel, error) {
@@ -423,6 +507,13 @@ func (s *store) ListBoardPinItem(ctx context.Context, filter *models.BoardPinFil
 			},
 		},
 		bson.D{
+			{Key: "$match",
+				Value: bson.D{
+					{Key: "pin.deleted_at", Value: bson.M{"$eq": nil}}, // Lọc các pin chưa bị xóa
+				},
+			},
+		},
+		bson.D{
 			{Key: "$unwind",
 				Value: bson.D{
 					{Key: "path", Value: "$board"},
@@ -655,7 +746,9 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 
 	user_id, _ := primitive.ObjectIDFromHex(filter.UserId)
 
-	filterMap := map[string]interface{}{}
+	filterMap := map[string]interface{}{
+		"deleted_at": nil,
+	}
 
 	if filter.UserId != "" {
 		filterMap["user_id"] = user_id

@@ -25,6 +25,7 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 
 	// private
 	group.Use(middleware.AuthMiddleware())
+	group.GET("/soft-deleted", h.ListSoftDeletedPins())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
 	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
@@ -38,7 +39,95 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/:id/list/comments", h.ListComments())
 	group.GET("/:id", h.GetPinById())
 	group.PUT("/:id", h.UpdatePin())
+	group.DELETE("/:id/soft-delete", h.SoftDeletePin())
+	group.POST("/:id/restore", h.RestorePin())
+}
 
+func (h *handler) ListSoftDeletedPins() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		data, err := h.service.ListSoftDeletedPins(c.Request.Context(), userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
+}
+
+func (h *handler) RestorePin() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.RestorePin(c.Request.Context(), id, userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin restored successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
+
+}
+
+func (h *handler) SoftDeletePin() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		userID, exists := c.Get("userID")
+
+		if !exists {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, utils.ErrUserIDIsBlank.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		err := h.service.SoftDeletePin(c.Request.Context(), id, userID.(string))
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Pin deleted successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
 }
 
 func (h *handler) UnSaveBoardPin() func(*gin.Context) {
@@ -512,10 +601,4 @@ func (h *handler) CreatePin() func(*gin.Context) {
 
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(id))
 	}
-}
-
-func (h *handler) Ping(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
 }
