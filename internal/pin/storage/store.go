@@ -746,16 +746,21 @@ func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *com
 
 	user_id, _ := primitive.ObjectIDFromHex(filter.UserId)
 
-	filterMap := map[string]interface{}{
+	filterMap := bson.M{
 		"deleted_at": nil,
 	}
 
+	// filterMap := map[string]interface{}{
+	// 	"deleted_at": nil,
+	// }
+
 	if filter.UserId != "" {
+
 		filterMap["user_id"] = user_id
 	}
 
 	if filter.Title != "" {
-		filterMap["title"] = filter.Title
+		filterMap["title"] = bson.M{"$regex": filter.Title, "$options": "i"}
 	}
 
 	var sortOrder int = 1
