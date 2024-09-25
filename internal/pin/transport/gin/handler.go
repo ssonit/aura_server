@@ -41,6 +41,7 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.PUT("/:id", h.UpdatePin())
 	group.DELETE("/:id/soft-delete", h.SoftDeletePin())
 	group.POST("/:id/restore", h.RestorePin())
+
 }
 
 func (h *handler) ListSoftDeletedPins() func(*gin.Context) {

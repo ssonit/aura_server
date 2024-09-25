@@ -30,4 +30,5 @@ var (
 	ErrCommentNotExists      = common.NewFullCustomError(404, "Comment not exists", "COMMENT_NOT_EXISTS")
 	ErrCannotSoftDelete      = common.NewFullCustomError(500, "Cannot soft delete", "CANNOT_SOFT_DELETE")
 	ErrFailedRestore         = common.NewFullCustomError(500, "Failed to restore", "FAILED_RESTORE")
+	ErrFailedToUpsertTags    = common.NewFullCustomError(500, "Failed to upsert tags", "FAILED_TO_UPSERT_TAGS")
 )

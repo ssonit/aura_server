@@ -372,7 +372,13 @@ func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primiti
 		return primitive.NilObjectID, utils.ErrBoardNotFound
 	}
 
-	data, err := s.store.Create(ctx, p)
+	tagIDs, err := s.store.CheckAndCreateTags(ctx, p.Tags)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	data, err := s.store.Create(ctx, p, tagIDs)
 
 	if err != nil {
 		return primitive.NilObjectID, err
@@ -380,10 +386,6 @@ func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primiti
 
 	if data.IsZero() {
 		return primitive.NilObjectID, utils.ErrDataIsZero
-	}
-
-	if err != nil {
-		return primitive.NilObjectID, err
 	}
 
 	// Create board pin for all pins

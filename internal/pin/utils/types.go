@@ -28,7 +28,7 @@ type PinService interface {
 }
 
 type PinStore interface {
-	Create(context.Context, *models.PinCreation) (primitive.ObjectID, error)
+	Create(context.Context, *models.PinCreation, []primitive.ObjectID) (primitive.ObjectID, error)
 	ListItem(ctx context.Context, filter *models.Filter, paging *common.Paging, moreKeys ...string) ([]models.PinModel, error)
 	GetItem(ctx context.Context, filter map[string]interface{}) (*models.PinModel, error)
 	UpdatePin(ctx context.Context, id string, pin *models.PinUpdate) error
@@ -49,4 +49,6 @@ type PinStore interface {
 	SoftDeletePin(context.Context, primitive.ObjectID) error
 	RestorePin(context.Context, primitive.ObjectID) error
 	ListSoftDeletedPins(context.Context, primitive.ObjectID) ([]models.PinModel, error)
+	CheckAndCreateTags(context.Context, []string) ([]primitive.ObjectID, error)
+	MatchingTags(ctx context.Context, keyword string) ([]primitive.ObjectID, error)
 }

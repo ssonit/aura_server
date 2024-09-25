@@ -14,15 +14,16 @@ import (
 )
 
 type Pin struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id"`
-	UserId      primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Title       string             `json:"title" bson:"title"`
-	Description string             `json:"description" bson:"description"`
-	MediaId     primitive.ObjectID `json:"media_id" bson:"media_id"`
-	LinkUrl     string             `json:"link_url" bson:"link_url"`
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
-	DeletedAt   *time.Time         `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
+	ID          primitive.ObjectID   `json:"id" bson:"_id"`
+	UserId      primitive.ObjectID   `json:"user_id" bson:"user_id"`
+	Title       string               `json:"title" bson:"title"`
+	Description string               `json:"description" bson:"description"`
+	MediaId     primitive.ObjectID   `json:"media_id" bson:"media_id"`
+	LinkUrl     string               `json:"link_url" bson:"link_url"`
+	Tags        []primitive.ObjectID `json:"tags" bson:"tags"`
+	CreatedAt   time.Time            `json:"created_at" bson:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at" bson:"updated_at"`
+	DeletedAt   *time.Time           `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
 }
 
 func (m *Pin) MarshalBSON() ([]byte, error) {
@@ -49,6 +50,7 @@ type PinModel struct {
 	User        User_Model.UserModel `json:"user,omitempty" bson:"user,omitempty"`
 	Media       Media_Model.Media    `json:"media,omitempty" bson:"media,omitempty"`
 	IsLiked     bool                 `json:"isLiked" bson:"isLiked"`
+	Tags        []string             `json:"tags" bson:"tags"`
 	CreatedAt   time.Time            `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time            `json:"updated_at" bson:"updated_at"`
 	DeletedAt   *time.Time           `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
@@ -61,6 +63,7 @@ type PinCreation struct {
 	Description string             `json:"description" bson:"description"`
 	MediaId     primitive.ObjectID `json:"media_id" bson:"media_id"`
 	LinkUrl     string             `json:"link_url" bson:"link_url"`
+	Tags        []string           `json:"tags" bson:"tags"`
 }
 
 type PinUpdate struct {
@@ -72,7 +75,7 @@ type PinUpdate struct {
 }
 
 type Filter struct {
-	Title   string `json:"title,omitempty" bson:"title,omitempty" form:"title"`
+	Keyword string `json:"keyword,omitempty" bson:"keyword,omitempty" form:"keyword"`
 	UserId  string `json:"user_id" bson:"user_id" form:"user_id"`
 	SortKey string `json:"sort_key,omitempty" bson:"sort_key,omitempty" form:"sort_key"`
 	Sort    string `json:"sort,omitempty" bson:"sort,omitempty" form:"sort"`

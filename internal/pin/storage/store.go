@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ssonit/aura_server/common"
@@ -11,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	Board_Model "github.com/ssonit/aura_server/internal/board/models"
 )
@@ -22,6 +24,7 @@ const (
 	CollNameBoard    = "boards"
 	CollNameLikes    = "likes"
 	CollNameComments = "comments"
+	CollNameTags     = "tags"
 )
 
 type store struct {
@@ -32,6 +35,213 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) CheckAndCreateTags(ctx context.Context, tags []string) ([]primitive.ObjectID, error) {
+	collection := s.db.Database(DbName).Collection(CollNameTags)
+
+	var tagIDs []primitive.ObjectID
+
+	for _, tag := range tags {
+		cleanHashtag := strings.TrimSpace(tag)
+
+		if cleanHashtag == "" {
+			// Bỏ qua nếu tag sau khi trim là chuỗi rỗng
+			continue
+		}
+
+		filter := bson.M{"name": tag}
+		update := bson.M{
+			"$setOnInsert": bson.M{
+				"name":       tag,
+				"count":      1,
+				"created_at": time.Now(),
+			},
+		}
+
+		opts := options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)
+
+		var updatedTag models.Tag
+
+		err := collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updatedTag)
+		if err != nil && err != mongo.ErrNoDocuments {
+			return nil, utils.ErrFailedToUpsertTags
+		}
+
+		tagIDs = append(tagIDs, updatedTag.ID)
+	}
+
+	return tagIDs, nil
+}
+
+func (s *store) Create(ctx context.Context, p *models.PinCreation, tagIDs []primitive.ObjectID) (primitive.ObjectID, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	data := &models.Pin{
+		Title:       p.Title,
+		Description: p.Description,
+		UserId:      p.UserId,
+		MediaId:     p.MediaId,
+		LinkUrl:     p.LinkUrl,
+		Tags:        tagIDs,
+	}
+
+	newData, err := collection.InsertOne(ctx, data)
+
+	if err != nil {
+		return primitive.NilObjectID, utils.ErrCannotCreatePin
+	}
+
+	id := newData.InsertedID.(primitive.ObjectID)
+
+	return id, nil
+}
+
+func (s *store) MatchingTags(ctx context.Context, keyword string) ([]primitive.ObjectID, error) {
+
+	collection := s.db.Database(DbName).Collection(CollNameTags)
+
+	tagFilter := bson.M{"name": bson.M{"$regex": keyword, "$options": "i"}}
+
+	cursor, err := collection.Find(ctx, tagFilter)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	var matchingTags []models.Tag
+
+	if err := cursor.All(ctx, &matchingTags); err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	var tags []primitive.ObjectID
+
+	for _, tag := range matchingTags {
+		tags = append(tags, tag.ID)
+	}
+
+	return tags, nil
+}
+
+func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *common.Paging, moreKeys ...string) ([]models.PinModel, error) {
+
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	user_id, _ := primitive.ObjectIDFromHex(filter.UserId)
+
+	filterMap := bson.M{"deleted_at": nil}
+
+	if filter.Keyword != "" {
+		tagIds, err := s.MatchingTags(ctx, filter.Keyword)
+
+		if err != nil {
+			return nil, err
+		}
+
+		var orFilter bson.A
+
+		orFilter = append(orFilter, bson.M{"title": bson.M{"$regex": filter.Keyword, "$options": "i"}}, bson.M{"description": bson.M{"$regex": filter.Keyword, "$options": "i"}})
+
+		if len(tagIds) > 0 {
+			orFilter = append(orFilter, bson.M{"tags": bson.M{"$in": tagIds}})
+		}
+
+		filterMap["$or"] = orFilter
+
+	}
+
+	if filter.UserId != "" {
+		filterMap["user_id"] = user_id
+	}
+
+	var sortOrder int = 1
+	if filter.Sort == "desc" {
+		sortOrder = -1
+	}
+
+	var sortKey string = "created_at"
+	if filter.SortKey != "" {
+		sortKey = filter.SortKey
+	}
+
+	fmt.Println(filterMap)
+
+	total, err := collection.CountDocuments(ctx, filterMap)
+	if err != nil {
+		return nil, utils.ErrFailedToCount
+	}
+
+	paging.Total = total
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: filterMap}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "media_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "media"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "users"},
+					{Key: "localField", Value: "user_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "user"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$media"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$user"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$project",
+				Value: bson.D{
+					{
+						Key:   "user.password",
+						Value: 0,
+					},
+				},
+			},
+		},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: sortKey, Value: sortOrder}}}},
+		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
+		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	var items []models.PinModel
+
+	if err = cursor.All(ctx, &items); err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	return items, nil
+
 }
 
 func (s *store) ListSoftDeletedPins(ctx context.Context, userId primitive.ObjectID) ([]models.PinModel, error) {
@@ -586,28 +796,6 @@ func (s *store) UpdatePin(ctx context.Context, id string, pin *models.PinUpdate)
 	return nil
 }
 
-func (s *store) Create(ctx context.Context, p *models.PinCreation) (primitive.ObjectID, error) {
-	collection := s.db.Database(DbName).Collection(CollName)
-
-	data := &models.Pin{
-		Title:       p.Title,
-		Description: p.Description,
-		UserId:      p.UserId,
-		MediaId:     p.MediaId,
-		LinkUrl:     p.LinkUrl,
-	}
-
-	newData, err := collection.InsertOne(ctx, data)
-
-	if err != nil {
-		return primitive.NilObjectID, utils.ErrCannotCreatePin
-	}
-
-	id := newData.InsertedID.(primitive.ObjectID)
-
-	return id, nil
-}
-
 func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*models.PinModel, error) {
 	collection := s.db.Database(DbName).Collection(CollName)
 
@@ -738,114 +926,4 @@ func (s *store) GetItem(ctx context.Context, filter map[string]interface{}) (*mo
 	}
 
 	return nil, nil
-}
-
-func (s *store) ListItem(ctx context.Context, filter *models.Filter, paging *common.Paging, moreKeys ...string) ([]models.PinModel, error) {
-
-	collection := s.db.Database(DbName).Collection(CollName)
-
-	user_id, _ := primitive.ObjectIDFromHex(filter.UserId)
-
-	filterMap := bson.M{
-		"deleted_at": nil,
-	}
-
-	// filterMap := map[string]interface{}{
-	// 	"deleted_at": nil,
-	// }
-
-	if filter.UserId != "" {
-
-		filterMap["user_id"] = user_id
-	}
-
-	if filter.Title != "" {
-		filterMap["title"] = bson.M{"$regex": filter.Title, "$options": "i"}
-	}
-
-	var sortOrder int = 1
-	if filter.Sort == "desc" {
-		sortOrder = -1
-	}
-
-	var sortKey string = "created_at"
-	if filter.SortKey != "" {
-		sortKey = filter.SortKey
-	}
-
-	total, err := collection.CountDocuments(ctx, filterMap)
-	if err != nil {
-		return nil, utils.ErrFailedToCount
-	}
-
-	paging.Total = total
-
-	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: filterMap}},
-		bson.D{
-			{Key: "$lookup",
-				Value: bson.D{
-					{Key: "from", Value: "medias"},
-					{Key: "localField", Value: "media_id"},
-					{Key: "foreignField", Value: "_id"},
-					{Key: "as", Value: "media"},
-				},
-			},
-		},
-		bson.D{
-			{Key: "$lookup",
-				Value: bson.D{
-					{Key: "from", Value: "users"},
-					{Key: "localField", Value: "user_id"},
-					{Key: "foreignField", Value: "_id"},
-					{Key: "as", Value: "user"},
-				},
-			},
-		},
-		bson.D{
-			{Key: "$unwind",
-				Value: bson.D{
-					{Key: "path", Value: "$media"},
-					{Key: "preserveNullAndEmptyArrays", Value: true},
-				},
-			},
-		},
-		bson.D{
-			{Key: "$unwind",
-				Value: bson.D{
-					{Key: "path", Value: "$user"},
-					{Key: "preserveNullAndEmptyArrays", Value: true},
-				},
-			},
-		},
-		bson.D{
-			{Key: "$project",
-				Value: bson.D{
-					{
-						Key:   "user.password",
-						Value: 0,
-					},
-				},
-			},
-		},
-		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
-		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
-		bson.D{{Key: "$sort", Value: bson.D{{Key: sortKey, Value: sortOrder}}}},
-	}
-
-	cursor, err := collection.Aggregate(ctx, pipeline)
-
-	if err != nil {
-		return nil, utils.ErrFailedToFindEntity
-	}
-	defer cursor.Close(ctx)
-
-	var items []models.PinModel
-
-	if err = cursor.All(ctx, &items); err != nil {
-		return nil, utils.ErrFailedToDecode
-	}
-
-	return items, nil
-
 }

@@ -28,7 +28,7 @@ type UserModel struct {
 	Username  string             `json:"username" bson:"username"`
 	Bio       string             `json:"bio" bson:"bio"`
 	AvatarID  primitive.ObjectID `json:"avatar_id" bson:"avatar_id"`
-	Avatar    Media_Model.Media  `json:"avatar" bson:"avatar"`
+	Avatar    *Media_Model.Media `json:"avatar,omitempty" bson:"avatar,omitempty"`
 	Website   string             `json:"website" bson:"website"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
