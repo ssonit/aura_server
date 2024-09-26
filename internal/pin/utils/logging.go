@@ -18,6 +18,17 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("List suggestions", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListSuggestions(ctx, keyword, limit)
+}
+
 func (s *LoggingMiddleware) ListSoftDeletedPins(ctx context.Context, userId string) ([]models.PinModel, error) {
 
 	start := time.Now()

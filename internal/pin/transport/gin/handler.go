@@ -25,6 +25,7 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 
 	// private
 	group.Use(middleware.AuthMiddleware())
+	group.GET("/suggestions", h.ListSuggestions())
 	group.GET("/soft-deleted", h.ListSoftDeletedPins())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
@@ -42,6 +43,28 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.DELETE("/:id/soft-delete", h.SoftDeletePin())
 	group.POST("/:id/restore", h.RestorePin())
 
+}
+
+func (h *handler) ListSuggestions() func(*gin.Context) {
+	return func(c *gin.Context) {
+		keyword := c.Query("keyword")
+
+		limit := 20
+
+		data, err := h.service.ListSuggestions(c.Request.Context(), keyword, limit)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+
+	}
 }
 
 func (h *handler) ListSoftDeletedPins() func(*gin.Context) {

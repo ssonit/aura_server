@@ -2,6 +2,8 @@ package biz
 
 import (
 	"context"
+	"net/url"
+	"strings"
 
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/pin/models"
@@ -19,6 +21,24 @@ type service struct {
 
 func NewService(store utils.PinStore) *service {
 	return &service{store: store}
+}
+
+func (s *service) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
+	trimmedKeyword := strings.TrimSpace(keyword)
+
+	decodedKeyword, err := url.QueryUnescape(trimmedKeyword)
+
+	if err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	data, err := s.store.ListSuggestions(ctx, decodedKeyword, limit)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (s *service) ListSoftDeletedPins(ctx context.Context, userId string) ([]models.PinModel, error) {
@@ -373,6 +393,12 @@ func (s *service) CreatePin(ctx context.Context, p *models.PinCreation) (primiti
 	}
 
 	tagIDs, err := s.store.CheckAndCreateTags(ctx, p.Tags)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	_, err = s.store.CheckAndCreateSuggestions(ctx, p.Tags)
 
 	if err != nil {
 		return primitive.NilObjectID, err

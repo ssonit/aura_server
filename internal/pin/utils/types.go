@@ -25,6 +25,7 @@ type PinService interface {
 	SoftDeletePin(ctx context.Context, id, userId string) error
 	RestorePin(ctx context.Context, id, userId string) error
 	ListSoftDeletedPins(context.Context, string) ([]models.PinModel, error)
+	ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error)
 }
 
 type PinStore interface {
@@ -51,4 +52,6 @@ type PinStore interface {
 	ListSoftDeletedPins(context.Context, primitive.ObjectID) ([]models.PinModel, error)
 	CheckAndCreateTags(context.Context, []string) ([]primitive.ObjectID, error)
 	MatchingTags(ctx context.Context, keyword string) ([]primitive.ObjectID, error)
+	CheckAndCreateSuggestions(context.Context, []string) ([]primitive.ObjectID, error)
+	ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error)
 }

@@ -18,13 +18,14 @@ import (
 )
 
 const (
-	DbName           = "aura_pins"
-	CollName         = "pins"
-	CollNameBoardPin = "board_pins"
-	CollNameBoard    = "boards"
-	CollNameLikes    = "likes"
-	CollNameComments = "comments"
-	CollNameTags     = "tags"
+	DbName              = "aura_pins"
+	CollName            = "pins"
+	CollNameBoardPin    = "board_pins"
+	CollNameBoard       = "boards"
+	CollNameLikes       = "likes"
+	CollNameComments    = "comments"
+	CollNameTags        = "tags"
+	CollNameSuggestions = "suggestions"
 )
 
 type store struct {
@@ -35,6 +36,65 @@ func NewStore(db *mongo.Client) *store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
+	collection := s.db.Database(DbName).Collection(CollNameSuggestions)
+
+	filter := bson.M{"name": bson.M{"$regex": keyword, "$options": "i"}}
+
+	lim := int64(limit)
+
+	cursor, err := collection.Find(ctx, filter, &options.FindOptions{Limit: &lim})
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	var suggestions []models.Suggestion
+
+	if err := cursor.All(ctx, &suggestions); err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	return suggestions, nil
+}
+
+func (s *store) CheckAndCreateSuggestions(ctx context.Context, suggestions []string) ([]primitive.ObjectID, error) {
+	collection := s.db.Database(DbName).Collection(CollNameSuggestions)
+
+	var suggestionIDs []primitive.ObjectID
+
+	for _, suggestion := range suggestions {
+		cleanSuggestion := strings.TrimSpace(suggestion)
+
+		if cleanSuggestion == "" {
+			// Bỏ qua nếu suggestion sau khi trim là chuỗi rỗng
+			continue
+		}
+
+		filter := bson.M{"name": suggestion}
+		update := bson.M{
+			"$setOnInsert": bson.M{
+				"name":       suggestion,
+				"count":      1,
+				"created_at": time.Now(),
+			},
+		}
+
+		opts := options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)
+
+		var updatedSuggestion models.Suggestion
+
+		err := collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updatedSuggestion)
+		if err != nil && err != mongo.ErrNoDocuments {
+			return nil, utils.ErrFailedToUpsertSuggestions
+		}
+
+		suggestionIDs = append(suggestionIDs, updatedSuggestion.ID)
+	}
+
+	return suggestionIDs, nil
 }
 
 func (s *store) CheckAndCreateTags(ctx context.Context, tags []string) ([]primitive.ObjectID, error) {
