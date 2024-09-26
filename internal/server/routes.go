@@ -32,7 +32,6 @@ import (
 )
 
 func (s *Server) MapRoutes(r *gin.Engine, httpAddr string) error {
-
 	// Pin
 	pinStore := pin_storage.NewStore(s.db)
 	pinService := pin_biz.NewService(pinStore)
