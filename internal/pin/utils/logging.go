@@ -18,6 +18,28 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) DeleteTag(ctx context.Context, tagId string) error {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Delete tag", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.DeleteTag(ctx, tagId)
+}
+
+func (s *LoggingMiddleware) CreateTag(ctx context.Context, tag models.TagCreation) (primitive.ObjectID, error) {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("Create tag", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.CreateTag(ctx, tag)
+}
+
 func (s *LoggingMiddleware) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
 
 	start := time.Now()

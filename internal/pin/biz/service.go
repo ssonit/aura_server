@@ -23,6 +23,38 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) DeleteTag(ctx context.Context, tagId string) error {
+	oID, err := primitive.ObjectIDFromHex(tagId)
+
+	if err != nil {
+		return utils.ErrFailedToDecodeObjID
+	}
+
+	err = s.store.DeleteTag(ctx, oID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) CreateTag(ctx context.Context, tag models.TagCreation) (primitive.ObjectID, error) {
+	_, err := s.store.CheckAndCreateTags(ctx, tag.Tags)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	_, err = s.store.CheckAndCreateSuggestions(ctx, tag.Tags)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return primitive.NilObjectID, nil
+}
+
 func (s *service) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
 	data, err := s.store.ListTags(ctx, paging)
 

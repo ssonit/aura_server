@@ -27,6 +27,8 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.GET("/suggestions", h.ListSuggestions())
 	group.GET("/soft-deleted", h.ListSoftDeletedPins())
+	group.POST("/tags/create", h.CreateTag())
+	group.DELETE("/tags/:id", h.DeleteTag())
 	group.GET("/tags", h.ListTags())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
@@ -44,6 +46,59 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.DELETE("/:id/soft-delete", h.SoftDeletePin())
 	group.POST("/:id/restore", h.RestorePin())
 
+}
+
+func (h *handler) DeleteTag() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		err := h.service.DeleteTag(c.Request.Context(), id)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Tag deleted successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+
+	}
+}
+
+func (h *handler) CreateTag() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		var tag models.TagCreation
+
+		if err := c.ShouldBindJSON(&tag); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		_, err := h.service.CreateTag(c.Request.Context(), tag)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Tag created successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
 }
 
 func (h *handler) ListTags() func(*gin.Context) {

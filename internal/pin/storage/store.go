@@ -38,6 +38,18 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
+func (s *store) DeleteTag(ctx context.Context, tagId primitive.ObjectID) error {
+	collection := s.db.Database(DbName).Collection(CollNameTags)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": tagId})
+
+	if err != nil {
+		return utils.ErrCannotDeleteTag
+	}
+
+	return nil
+}
+
 func (s *store) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
 	collection := s.db.Database(DbName).Collection(CollNameTags)
 
@@ -51,7 +63,7 @@ func (s *store) ListTags(ctx context.Context, paging *common.Paging) ([]models.T
 	skip := int64((paging.Page - 1) * paging.Limit)
 	limit := int64(paging.Limit)
 
-	cursor, err := collection.Find(ctx, bson.D{}, &options.FindOptions{Skip: &skip, Limit: &limit})
+	cursor, err := collection.Find(ctx, bson.D{}, &options.FindOptions{Skip: &skip, Limit: &limit, Sort: bson.D{{Key: "created_at", Value: -1}}})
 	if err != nil {
 		return nil, utils.ErrFailedToFindEntity
 	}

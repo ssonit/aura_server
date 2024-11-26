@@ -32,4 +32,5 @@ var (
 	ErrFailedRestore             = common.NewFullCustomError(500, "Failed to restore", "FAILED_RESTORE")
 	ErrFailedToUpsertTags        = common.NewFullCustomError(500, "Failed to upsert tags", "FAILED_TO_UPSERT_TAGS")
 	ErrFailedToUpsertSuggestions = common.NewFullCustomError(500, "Failed to upsert suggestions", "FAILED_TO_UPSERT_SUGGESTIONS")
+	ErrCannotDeleteTag           = common.NewFullCustomError(500, "Cannot delete tag", "CANNOT_DELETE_TAG")
 )

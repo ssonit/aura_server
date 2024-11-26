@@ -13,7 +13,6 @@ type Tag struct {
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }
 
-
 type TagCreation struct {
-	Name string `json:"name" bson:"name"`
+	Tags []string `json:"tags" bson:"tags"`
 }
