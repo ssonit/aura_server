@@ -37,9 +37,37 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 
 	group.Use(middleware.AuthMiddleware())
 	group.GET("/me", h.Me())
+	group.GET("/admin/users", h.ListUsers())
 	group.GET("/:id", h.GetUser())
 	group.PUT("/:id", h.UpdateUser())
 	group.POST("/logout", h.Logout())
+}
+
+func (h *handler) ListUsers() func(*gin.Context) {
+	return func(c *gin.Context) {
+		var data []*models.UserModel
+		var paging common.Paging
+
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		paging.Process()
+
+		data, err := h.service.ListUsers(c.Request.Context(), &paging)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, nil, nil))
+	}
 }
 
 func (h *handler) UpdateUser() func(*gin.Context) {

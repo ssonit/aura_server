@@ -27,6 +27,7 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.GET("/suggestions", h.ListSuggestions())
 	group.GET("/soft-deleted", h.ListSoftDeletedPins())
+	group.GET("/tags", h.ListTags())
 	group.POST("/create", h.CreatePin())
 	group.GET("/", h.ListPinItem())
 	group.GET("/board-pin/:boardId/pins", h.ListBoardPinItem())
@@ -43,6 +44,34 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.DELETE("/:id/soft-delete", h.SoftDeletePin())
 	group.POST("/:id/restore", h.RestorePin())
 
+}
+
+func (h *handler) ListTags() func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		var data []models.Tag
+		var paging common.Paging
+
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, common.NewFullCustomError(http.StatusBadRequest, err.Error(), "INVALID_REQUEST"))
+			return
+		}
+
+		paging.Process()
+
+		data, err := h.service.ListTags(c.Request.Context(), &paging)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, common.NewSuccessResponse(data, paging, nil, nil))
+	}
 }
 
 func (h *handler) ListSuggestions() func(*gin.Context) {

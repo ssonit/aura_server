@@ -38,6 +38,33 @@ func NewStore(db *mongo.Client) *store {
 	}
 }
 
+func (s *store) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
+	collection := s.db.Database(DbName).Collection(CollNameTags)
+
+	total, err := collection.CountDocuments(ctx, bson.D{})
+	if err != nil {
+		return nil, utils.ErrFailedToCount
+	}
+
+	paging.Total = total
+
+	skip := int64((paging.Page - 1) * paging.Limit)
+	limit := int64(paging.Limit)
+
+	cursor, err := collection.Find(ctx, bson.D{}, &options.FindOptions{Skip: &skip, Limit: &limit})
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	var tags []models.Tag
+
+	if err := cursor.All(ctx, &tags); err != nil {
+		return nil, utils.ErrFailedToDecode
+	}
+
+	return tags, nil
+}
+
 func (s *store) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
 	collection := s.db.Database(DbName).Collection(CollNameSuggestions)
 

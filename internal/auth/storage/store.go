@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"github.com/ssonit/aura_server/internal/auth/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,6 +24,65 @@ type store struct {
 
 func NewStore(db *mongo.Client) *store {
 	return &store{db: db}
+}
+
+func (s *store) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	total, err := collection.CountDocuments(ctx, bson.D{})
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+
+	paging.Total = total
+
+	pipeline := mongo.Pipeline{
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "medias"},
+					{Key: "localField", Value: "avatar_id"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "avatar"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$avatar"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}},
+		bson.D{{Key: "$skip", Value: int64((paging.Page - 1) * paging.Limit)}},
+		bson.D{{Key: "$limit", Value: int64(paging.Limit)}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+
+	if err != nil {
+		return nil, utils.ErrFailedToFindEntity
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.UserModel
+
+	for cursor.Next(ctx) {
+		var item models.UserModel
+		if err := cursor.Decode(&item); err != nil {
+			return nil, utils.ErrFailedToDecode
+		}
+
+		users = append(users, &item)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, utils.ErrCursorError
+	}
+
+	return users, nil
 }
 
 func (s *store) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {

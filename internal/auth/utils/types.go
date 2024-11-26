@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 
+	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -15,6 +16,7 @@ type UserStore interface {
 	UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error
 	CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error
 	DeleteRefreshToken(ctx context.Context, refresh_token string) error
+	ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error)
 }
 
 type UserService interface {
@@ -24,4 +26,5 @@ type UserService interface {
 	Logout(ctx context.Context, refresh_token string) error
 	GetUser(ctx context.Context, id string) (*models.UserModel, error)
 	UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error
+	ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error)
 }

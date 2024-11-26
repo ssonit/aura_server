@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"go.uber.org/zap"
 )
@@ -14,6 +15,15 @@ type LoggingMiddleware struct {
 
 func NewLoggingMiddleware(next UserService) UserService {
 	return &LoggingMiddleware{next}
+}
+
+func (s *LoggingMiddleware) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("List users", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListUsers(ctx, paging)
 }
 
 func (s *LoggingMiddleware) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {

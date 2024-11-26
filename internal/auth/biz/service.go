@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 
+	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
 	"github.com/ssonit/aura_server/internal/auth/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +15,10 @@ type service struct {
 
 func NewService(s utils.UserStore) *service {
 	return &service{store: s}
+}
+
+func (s *service) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {
+	return s.store.ListUsers(ctx, paging)
 }
 
 func (s *service) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error {

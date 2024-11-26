@@ -18,6 +18,17 @@ func NewLoggingMiddleware(next PinService) PinService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
+
+	start := time.Now()
+
+	defer func() {
+		zap.L().Info("List tags", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.ListTags(ctx, paging)
+}
+
 func (s *LoggingMiddleware) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
 
 	start := time.Now()

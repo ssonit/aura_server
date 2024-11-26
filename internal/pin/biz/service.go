@@ -23,6 +23,17 @@ func NewService(store utils.PinStore) *service {
 	return &service{store: store}
 }
 
+func (s *service) ListTags(ctx context.Context, paging *common.Paging) ([]models.Tag, error) {
+	data, err := s.store.ListTags(ctx, paging)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+
+}
+
 func (s *service) ListSuggestions(ctx context.Context, keyword string, limit int) ([]models.Suggestion, error) {
 	trimmedKeyword := strings.TrimSpace(keyword)
 
