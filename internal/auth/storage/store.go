@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ssonit/aura_server/common"
 	"github.com/ssonit/aura_server/internal/auth/models"
@@ -24,6 +25,49 @@ type store struct {
 
 func NewStore(db *mongo.Client) *store {
 	return &store{db: db}
+}
+
+func (s *store) UnbannedUser(ctx context.Context, id string) error {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	update := bson.D{
+		{Key: "$unset", Value: bson.D{
+			{Key: "banned_at", Value: ""},
+		}},
+	}
+
+	_, err := collection.UpdateByID(ctx, oID, update)
+
+	if err != nil {
+		return utils.ErrCannotUnbannedUser
+	}
+
+	return nil
+}
+
+func (s *store) BannedUser(ctx context.Context, id string) error {
+	collection := s.db.Database(DbName).Collection(CollName)
+
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	now := time.Now()
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "banned_at", Value: now},
+		}},
+	}
+
+	_, err := collection.UpdateByID(ctx, oID, update)
+
+	if err != nil {
+		return utils.ErrCannotBannedUser
+	}
+
+	return nil
+
 }
 
 func (s *store) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {

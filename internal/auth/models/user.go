@@ -32,6 +32,7 @@ type UserModel struct {
 	Website   string             `json:"website" bson:"website"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+	BannedAt  *time.Time         `json:"banned_at,omitempty" bson:"banned_at,omitempty"`
 }
 
 func (m *User) MarshalBSON() ([]byte, error) {

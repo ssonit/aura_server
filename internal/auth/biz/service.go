@@ -17,6 +17,14 @@ func NewService(s utils.UserStore) *service {
 	return &service{store: s}
 }
 
+func (s *service) UnbannedUser(ctx context.Context, id string) error {
+	return s.store.UnbannedUser(ctx, id)
+}
+
+func (s *service) BannedUser(ctx context.Context, id string) error {
+	return s.store.BannedUser(ctx, id)
+}
+
 func (s *service) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {
 	return s.store.ListUsers(ctx, paging)
 }

@@ -17,6 +17,8 @@ type UserStore interface {
 	CreateRefreshToken(ctx context.Context, p *models.RefreshTokenCreation) error
 	DeleteRefreshToken(ctx context.Context, refresh_token string) error
 	ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error)
+	BannedUser(ctx context.Context, id string) error
+	UnbannedUser(ctx context.Context, id string) error
 }
 
 type UserService interface {
@@ -27,4 +29,6 @@ type UserService interface {
 	GetUser(ctx context.Context, id string) (*models.UserModel, error)
 	UpdateUser(ctx context.Context, id string, user *models.UserUpdate) error
 	ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error)
+	BannedUser(ctx context.Context, id string) error
+	UnbannedUser(ctx context.Context, id string) error
 }

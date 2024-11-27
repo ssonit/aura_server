@@ -38,9 +38,57 @@ func (h *handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.Use(middleware.AuthMiddleware())
 	group.GET("/me", h.Me())
 	group.GET("/admin/users", h.ListUsers())
+	group.DELETE("/admin/banned/:id", h.BannedUser())
+	group.POST("/admin/unbanned/:id", h.UnbannedUser())
 	group.GET("/:id", h.GetUser())
 	group.PUT("/:id", h.UpdateUser())
 	group.POST("/logout", h.Logout())
+}
+
+func (h *handler) UnbannedUser() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		err := h.service.UnbannedUser(c.Request.Context(), id)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Unbanned user successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
+}
+
+func (h *handler) BannedUser() func(*gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		err := h.service.BannedUser(c.Request.Context(), id)
+
+		if err != nil {
+			if customErr, ok := err.(*common.CustomError); ok {
+				c.JSON(customErr.StatusCode, err)
+			} else {
+				c.JSON(http.StatusInternalServerError, common.NewFullCustomError(http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR"))
+			}
+			return
+		}
+
+		result := map[string]interface{}{
+			"message": "Banned user successfully",
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(result))
+	}
 }
 
 func (h *handler) ListUsers() func(*gin.Context) {

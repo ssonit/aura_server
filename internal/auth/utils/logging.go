@@ -17,6 +17,24 @@ func NewLoggingMiddleware(next UserService) UserService {
 	return &LoggingMiddleware{next}
 }
 
+func (s *LoggingMiddleware) UnbannedUser(ctx context.Context, id string) error {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Unbanned user", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.UnbannedUser(ctx, id)
+}
+
+func (s *LoggingMiddleware) BannedUser(ctx context.Context, id string) error {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("Banned user", zap.Duration("took", time.Since(start)))
+	}()
+
+	return s.next.BannedUser(ctx, id)
+}
+
 func (s *LoggingMiddleware) ListUsers(ctx context.Context, paging *common.Paging) ([]*models.UserModel, error) {
 	start := time.Now()
 	defer func() {

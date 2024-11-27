@@ -17,4 +17,6 @@ var (
 	ErrFailedToDecode       = common.NewFullCustomError(500, "Failed to decode", "FAILED_TO_DECODE")
 	ErrCursorError          = common.NewFullCustomError(500, "Cursor error", "CURSOR_ERROR")
 	ErrCannotUpdateUser     = common.NewFullCustomError(500, "Failed to update user", "UPDATE_USER_ERROR")
+	ErrCannotBannedUser     = common.NewFullCustomError(500, "Failed to banned user", "BANNED_USER_ERROR")
+	ErrCannotUnbannedUser   = common.NewFullCustomError(500, "Failed to unbanned user", "UNBANNED_USER_ERROR")
 )
